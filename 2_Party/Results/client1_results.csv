@@ -1,0 +1,5 @@
+,Value
+final_test_accuracy,0.8219107844812853
+final_test_f1_macro,0.8223573044557355
+best_val_accuracy,0.823876260468296
+best_val_f1_macro,0.8239576968177516
