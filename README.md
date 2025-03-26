@@ -6,7 +6,7 @@ This repository contains two implementations of Vertical Federated Learning (VFL
 
 ## 📌 Key Features
 
-### 1. `2_vfl_modified.py` (Base Implementation)
+### 1. `final_vfl.py` (Base Implementation)
 - Implements core VFL workflow from the paper:
   - Bottom models for each client
   - Top model for label owner
