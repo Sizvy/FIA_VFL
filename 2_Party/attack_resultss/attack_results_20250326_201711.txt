@@ -1,0 +1,69 @@
+VFL Feature Inference Attack Results
+==================================================
+Start Time: 2025-03-26 20:17:11.379575
+
+Model Architecture:
+- Active Dim: 24
+- Passive Dim: 24
+- Embedding Dim: 32
+==================================================
+
+
+Embedding Analysis:
+Active embeddings - Mean: 1.5427, Std: 2.0996
+Passive embeddings - Mean: 1.6544, Std: 3.3962
+
+Training enhanced attack model...
+
+Training Parameters:
+- Epochs: 500
+- Batch Size: 512
+- Recon Weight: 0.3
+--------------------------------------------------
+Epoch 20/500 | Loss: 8.1987 | Train AUC: 0.5921 | Val AUC: 0.5935 | Val Recon: 39.3817
+Epoch 40/500 | Loss: 6.4984 | Train AUC: 0.6207 | Val AUC: 0.6315 | Val Recon: 33.8282
+Epoch 60/500 | Loss: 5.5019 | Train AUC: 0.6437 | Val AUC: 0.6432 | Val Recon: 31.9074
+Epoch 80/500 | Loss: 5.0534 | Train AUC: 0.6577 | Val AUC: 0.6591 | Val Recon: 26.7773
+Epoch 100/500 | Loss: 4.9776 | Train AUC: 0.6598 | Val AUC: 0.6617 | Val Recon: 29.2674
+Epoch 120/500 | Loss: 4.9885 | Train AUC: 0.6583 | Val AUC: 0.6586 | Val Recon: 28.1345
+Epoch 140/500 | Loss: 4.5640 | Train AUC: 0.6573 | Val AUC: 0.6654 | Val Recon: 28.6446
+Epoch 160/500 | Loss: 3.7717 | Train AUC: 0.6617 | Val AUC: 0.6598 | Val Recon: 29.5087
+Epoch 180/500 | Loss: 2.8039 | Train AUC: 0.6690 | Val AUC: 0.6597 | Val Recon: 25.8896
+Epoch 200/500 | Loss: 1.8108 | Train AUC: 0.6784 | Val AUC: 0.6722 | Val Recon: 27.3330
+Epoch 220/500 | Loss: 1.3080 | Train AUC: 0.6871 | Val AUC: 0.6743 | Val Recon: 16.3142
+Epoch 240/500 | Loss: 1.1429 | Train AUC: 0.6985 | Val AUC: 0.6939 | Val Recon: 15.0929
+Epoch 260/500 | Loss: 1.0789 | Train AUC: 0.7068 | Val AUC: 0.7050 | Val Recon: 19.3400
+Epoch 280/500 | Loss: 1.1883 | Train AUC: 0.7149 | Val AUC: 0.7167 | Val Recon: 17.3723
+Epoch 300/500 | Loss: 1.0094 | Train AUC: 0.7200 | Val AUC: 0.7172 | Val Recon: 16.1435
+Epoch 320/500 | Loss: 1.0111 | Train AUC: 0.7166 | Val AUC: 0.7155 | Val Recon: 15.1382
+Epoch 340/500 | Loss: 1.0205 | Train AUC: 0.7130 | Val AUC: 0.7061 | Val Recon: 18.0210
+Epoch 360/500 | Loss: 1.0863 | Train AUC: 0.7119 | Val AUC: 0.7106 | Val Recon: 17.8433
+Epoch 380/500 | Loss: 1.1140 | Train AUC: 0.7042 | Val AUC: 0.7013 | Val Recon: 14.7652
+Epoch 400/500 | Loss: 1.0031 | Train AUC: 0.7093 | Val AUC: 0.7046 | Val Recon: 14.4825
+Epoch 420/500 | Loss: 0.9750 | Train AUC: 0.7145 | Val AUC: 0.7180 | Val Recon: 17.0442
+Epoch 440/500 | Loss: 1.4814 | Train AUC: 0.7218 | Val AUC: 0.7161 | Val Recon: 18.4038
+Epoch 460/500 | Loss: 0.8229 | Train AUC: 0.7310 | Val AUC: 0.7329 | Val Recon: 10.2108
+Epoch 480/500 | Loss: 0.7933 | Train AUC: 0.7377 | Val AUC: 0.7350 | Val Recon: 11.2635
+Epoch 500/500 | Loss: 0.7847 | Train AUC: 0.7421 | Val AUC: 0.7374 | Val Recon: 16.2410
+
+Running final evaluation with surrogates...
+============================================================
+Final Evaluation with Surrogates
+============================================================
+AUC-ROC: 0.7378
+Reconstruction MSE: 7.6950
+
+Classification Report:
+              precision    recall  f1-score   support
+
+   Surrogate       0.70      0.63      0.66     35105
+        Real       0.66      0.73      0.69     35105
+
+    accuracy                           0.68     70210
+   macro avg       0.68      0.68      0.68     70210
+weighted avg       0.68      0.68      0.68     70210
+
+============================================================
+
+Best Validation AUC: 0.7380
+End Time: 2025-03-26 20:37:11.185140
