@@ -44,7 +44,7 @@ This repository contains implementations of Vertical Federated Learning (VFL), i
 
 ```bash
 git clone https://github.com/your_username/vfl-implementation.git
-cd vfl-implementation
+cd FIA_VFL
 
 # Run base implementation
 python final_vfl.py
