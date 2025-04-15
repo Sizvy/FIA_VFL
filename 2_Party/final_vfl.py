@@ -125,7 +125,7 @@ def main():
     # Configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     num_epochs = 50
-    patience = 5
+    patience = 12
     
     # Load data
     client1_train, client1_val, client1_test, y_train, y_val, y_test = load_client_data(1)
