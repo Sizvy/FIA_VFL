@@ -71,7 +71,7 @@ class TopModel(nn.Module):
 
 def train_one_epoch(client1_loader, client2_loader, 
                    client1_bottom, client2_bottom, top_model, 
-                   criterion, optimizer1, optimizer2, device):
+                   criterion, optimizer1, optimizer2_bottom, optimizer_top, device):
     """Enhanced training with gradient clipping and proper batch handling"""
     client1_bottom.train()
     client2_bottom.train()
@@ -81,9 +81,15 @@ def train_one_epoch(client1_loader, client2_loader,
     for (x1, y), (x2,) in zip(client1_loader, client2_loader):
         x1, x2, y = x1.to(device, non_blocking=True), x2.to(device, non_blocking=True), y.to(device, non_blocking=True)
         
+        batch_size = min(x1.size(0), x2.size(0), y.size(0))  # Take the minimum batch size
+        x1 = x1[:batch_size]
+        x2 = x2[:batch_size]
+        y = y[:batch_size]
+
         # Forward pass
         optimizer1.zero_grad()
-        optimizer2.zero_grad()
+        optimizer2_bottom.zero_grad()
+        optimizer_top.zero_grad()
         
         h1 = client1_bottom(x1)
         h2 = client2_bottom(x2)
@@ -100,7 +106,8 @@ def train_one_epoch(client1_loader, client2_loader,
         torch.nn.utils.clip_grad_norm_(top_model.parameters(), 1.0)
         
         optimizer1.step()
-        optimizer2.step()
+        optimizer2_bottom.step()
+        optimizer_top.step()
         
         running_loss += loss.item()
     
@@ -162,10 +169,8 @@ def main():
 
     # Enhanced optimizers with weight decay
     optimizer1 = optim.AdamW(client1_bottom.parameters(), lr=0.001, weight_decay=1e-4)
-    optimizer2 = optim.AdamW(
-        list(client2_bottom.parameters()) + list(top_model.parameters()), 
-        lr=0.001, weight_decay=1e-4
-    )
+    optimizer2_bottom = optim.Adam(client2_bottom.parameters(), lr=0.001)
+    optimizer_top = optim.Adam(top_model.parameters(), lr=0.001)
 
     # Privacy engine with adjusted parameters
     privacy_engine = PrivacyEngine()
@@ -173,14 +178,26 @@ def main():
         module=client1_bottom,
         optimizer=optimizer1,
         data_loader=train_loader1,
-        noise_multiplier=0.5,  # Reduced noise for better accuracy
+        noise_multiplier=1.2,  # Reduced noise for better accuracy
         max_grad_norm=1.0,
         poisson_sampling=False
     )
 
+    # For Client 2
+    privacy_engine2 = PrivacyEngine()
+    client2_bottom, optimizer2, train_loader2 = privacy_engine2.make_private(
+        module=client2_bottom,
+        optimizer=optimizer2_bottom,
+        data_loader=train_loader2,
+        noise_multiplier=1.2,
+        max_grad_norm=1.0,
+        poisson_sampling=False
+    ) 
+
     # Learning rate scheduler
     scheduler1 = optim.lr_scheduler.CosineAnnealingLR(optimizer1, T_max=num_epochs)
-    scheduler2 = optim.lr_scheduler.CosineAnnealingLR(optimizer2, T_max=num_epochs)
+    scheduler2_bottom = optim.lr_scheduler.CosineAnnealingLR(optimizer2_bottom, T_max=num_epochs)
+    scheduler_top = optim.lr_scheduler.CosineAnnealingLR(optimizer_top, T_max=num_epochs)
 
     # Label smoothing for better generalization
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
@@ -193,7 +210,7 @@ def main():
         train_loss = train_one_epoch(
             train_loader1, train_loader2,
             client1_bottom, client2_bottom, top_model,
-            criterion, optimizer1, optimizer2, device
+            criterion, optimizer1, optimizer2_bottom, optimizer_top, device
         )
         
         val_loss, val_acc, val_f1 = validate(
@@ -203,7 +220,8 @@ def main():
         )
         
         scheduler1.step()
-        scheduler2.step()
+        scheduler2_bottom.step()
+        scheduler_top.step()
         
         print(f"Epoch {epoch+1}/{num_epochs}:")
         print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
