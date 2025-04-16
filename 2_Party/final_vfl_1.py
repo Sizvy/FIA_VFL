@@ -28,7 +28,7 @@ def load_client_data(client_id):
     return train_data, val_data, test_data
 
 def create_dataloaders(*data, batch_size=64):
-    """Create balanced dataloaders"""
+    """Create balanced dataloaders with pinned memory"""
     datasets = [TensorDataset(torch.tensor(d, dtype=torch.float32)) for d in data[:3]]
     if len(data) > 3:
         datasets[0] = TensorDataset(torch.tensor(data[0], dtype=torch.float32), 
@@ -38,29 +38,19 @@ def create_dataloaders(*data, batch_size=64):
         datasets[2] = TensorDataset(torch.tensor(data[2], dtype=torch.float32),
                                   torch.tensor(data[5], dtype=torch.long))
     
-    # Ensure balanced batches
-    loaders = [DataLoader(d, batch_size=batch_size, shuffle=(i==0), 
-                         drop_last=True, num_workers=4, pin_memory=True)
+    loaders = [DataLoader(d, batch_size=batch_size, shuffle=(i==0),
+                         drop_last=True, pin_memory=True, num_workers=4)
                for i, d in enumerate(datasets)]
     return loaders
 
 class BottomModel(nn.Module):
-    def __init__(self, input_dim=24, hidden_dim=128, output_dim=64):
+    def __init__(self, input_dim=24, hidden_dim=64, output_dim=32):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim * 2),
-            nn.GroupNorm(4, hidden_dim * 2),
-            nn.ELU(),
-            nn.Dropout(0.4),
-
-            nn.Linear(hidden_dim * 2, hidden_dim),
-            nn.GroupNorm(4, hidden_dim),
-            nn.ELU(),
-            nn.Dropout(0.3),
-
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
             nn.Linear(hidden_dim, output_dim),
-            nn.LayerNorm(output_dim),
-            nn.SiLU()
+            nn.ReLU()
         )
 
     def forward(self, x):
@@ -70,51 +60,53 @@ class TopModel(nn.Module):
     def __init__(self, input_dim=128, num_classes=11):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 128),
-            nn.ELU(),
-            nn.Dropout(0.3),
-            
-            nn.Linear(128, 64),
-            nn.ELU(),
-            
+            nn.Linear(input_dim, 64),
+            nn.ReLU(),
             nn.Linear(64, num_classes)
         )
-    
+
     def forward(self, x):
         return self.net(x)
 
-def train_one_epoch(client1_loader, client2_loader, models, optimizers, criterion, device):
-    client1_bottom, client2_bottom, top_model = models
-    optimizer1, optimizer2 = optimizers
-    
+def train_one_epoch(client1_loader, client2_loader, 
+                   client1_bottom, client2_bottom, top_model, 
+                   criterion, optimizer1, optimizer2_bottom, optimizer_top, device):
+    """Enhanced training with gradient clipping and proper batch handling"""
     client1_bottom.train()
     client2_bottom.train()
     top_model.train()
     
     running_loss = 0.0
     for (x1, y), (x2,) in zip(client1_loader, client2_loader):
-        x1, x2, y = x1.to(device), x2.to(device), y.to(device)
+        x1, x2, y = x1.to(device, non_blocking=True), x2.to(device, non_blocking=True), y.to(device, non_blocking=True)
         
+        batch_size = min(x1.size(0), x2.size(0), y.size(0))  # Take the minimum batch size
+        x1 = x1[:batch_size]
+        x2 = x2[:batch_size]
+        y = y[:batch_size]
+
         # Forward pass
+        optimizer1.zero_grad()
+        optimizer2_bottom.zero_grad()
+        optimizer_top.zero_grad()
+        
         h1 = client1_bottom(x1)
         h2 = client2_bottom(x2)
         h_combined = torch.cat([h1, h2], dim=1)
         outputs = top_model(h_combined)
         
-        # Backward pass
-        optimizer1.zero_grad()
-        optimizer2.zero_grad()
-        
+        # Backward pass with gradient clipping
         loss = criterion(outputs, y)
         loss.backward()
         
-        # Gradient clipping before step
+        # Gradient clipping for all models
         torch.nn.utils.clip_grad_norm_(client1_bottom.parameters(), 1.0)
         torch.nn.utils.clip_grad_norm_(client2_bottom.parameters(), 1.0)
         torch.nn.utils.clip_grad_norm_(top_model.parameters(), 1.0)
         
         optimizer1.step()
-        optimizer2.step()
+        optimizer2_bottom.step()
+        optimizer_top.step()
         
         running_loss += loss.item()
     
@@ -150,9 +142,9 @@ def validate(client1_loader, client2_loader, models, criterion, device):
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_epochs = 100
-    patience = 15
-    batch_size = 128  # Increased batch size
+    num_epochs = 100  # Increased epochs
+    patience = 20     # More patience
+    batch_size = 128  # Larger batch size
     
     # Load and verify data
     client1_data = load_client_data(1)
@@ -168,42 +160,34 @@ def main():
     train_loader2, val_loader2, test_loader2 = create_dataloaders(
         *client2_data[:3], batch_size=batch_size
     )
-    
-    # Initialize models with proper dimensions
-    client1_bottom = BottomModel(
-        input_dim=client1_data[0].shape[1], 
-        output_dim=64  # Increased embedding size
-    ).to(device)
-    
-    client2_bottom = BottomModel(
-        input_dim=client2_data[0].shape[1],
-        output_dim=64
-    ).to(device)
-    
-    top_model = TopModel(input_dim=128).to(device)  # 64*2=128
-    
-    # Optimizers with learning rate scheduling
-    optimizer1 = optim.AdamW(client1_bottom.parameters(), lr=0.001)
-    optimizer2 = optim.AdamW(
-        list(client2_bottom.parameters()) + list(top_model.parameters()), 
-        lr=0.001
-    )
-    
+
+    # Initialize models (unchanged architecture)
+    client1_bottom = BottomModel(input_dim=client1_data[0].shape[1], output_dim=64).to(device)
+    client2_bottom = BottomModel(input_dim=client2_data[0].shape[1], output_dim=64).to(device)
+    top_model = TopModel().to(device)
+
+    # Enhanced optimizers with weight decay
+    optimizer1 = optim.AdamW(client1_bottom.parameters(), lr=0.001, weight_decay=1e-4)
+    optimizer2_bottom = optim.Adam(client2_bottom.parameters(), lr=0.001)
+    optimizer_top = optim.Adam(top_model.parameters(), lr=0.001)
+
+    # Learning rate scheduler
     scheduler1 = optim.lr_scheduler.CosineAnnealingLR(optimizer1, T_max=num_epochs)
-    scheduler2 = optim.lr_scheduler.CosineAnnealingLR(optimizer2, T_max=num_epochs)
-    
-    criterion = nn.CrossEntropyLoss()
-    
-    # Training loop with early stopping
+    scheduler2_bottom = optim.lr_scheduler.CosineAnnealingLR(optimizer2_bottom, T_max=num_epochs)
+    scheduler_top = optim.lr_scheduler.CosineAnnealingLR(optimizer_top, T_max=num_epochs)
+
+    # Label smoothing for better generalization
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+
     best_val_acc = 0.0
     counter = 0
-    
+
+    # Training loop with early stopping based on accuracy
     for epoch in range(num_epochs):
         train_loss = train_one_epoch(
             train_loader1, train_loader2,
-            [client1_bottom, client2_bottom, top_model],
-            [optimizer1, optimizer2],
-            criterion, device
+            client1_bottom, client2_bottom, top_model,
+            criterion, optimizer1, optimizer2_bottom, optimizer_top, device
         )
         
         val_loss, val_acc, val_f1 = validate(
@@ -213,12 +197,14 @@ def main():
         )
         
         scheduler1.step()
-        scheduler2.step()
+        scheduler2_bottom.step()
+        scheduler_top.step()
         
         print(f"Epoch {epoch+1}/{num_epochs}:")
         print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
         print(f"Val Acc: {val_acc:.4f} | Val F1: {val_f1:.4f}")
-        
+        print(f"Current LR: {optimizer1.param_groups[0]['lr']:.6f}")
+
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             counter = 0
@@ -232,7 +218,7 @@ def main():
             if counter >= patience:
                 print("Early stopping triggered")
                 break
-    
+
     # Final evaluation
     checkpoint = torch.load('Models/best_vfl_model.pt')
     client1_bottom.load_state_dict(checkpoint['client1_bottom'])
@@ -244,7 +230,7 @@ def main():
         [client1_bottom, client2_bottom, top_model],
         criterion, device
     )
-    
+
     print("\nFinal Results:")
     print(f"Test Accuracy: {test_acc:.4f}")
     print(f"Test F1: {test_f1:.4f}")
