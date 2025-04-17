@@ -68,13 +68,13 @@ class TopModel(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, 256),
-            nn.BatchNorm1d(256),
-            nn.GELU(),
+            nn.GroupNorm(4, 256),
+            nn.ELU(),
             nn.Dropout(0.5),
             
             nn.Linear(256, 128),
-            nn.BatchNorm1d(128),
-            nn.GELU(),
+            nn.GroupNorm(128),
+            nn.ELU(),
             nn.Dropout(0.3),
             
             nn.Linear(128, 64),
