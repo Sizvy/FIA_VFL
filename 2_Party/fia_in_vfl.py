@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from torch.nn.utils import spectral_norm
 from datetime import datetime
 import os
-from final_vfl_5 import BottomModel
+from final_vfl_1_dp import BottomModel
 
 class Discriminator(nn.Module):
     """Standalone discriminator to distinguish real vs shuffled passive embeddings"""
@@ -123,12 +123,49 @@ class EmbeddingDiscriminatorAttack:
             
             # Log progress
             if (epoch+1) % 20 == 0:
-                log_msg = f"Epoch {epoch+1}/{epochs} | Loss: {self.train_losses[-1]:.4f} | " \
-                          f"Val AUC: {val_metrics['auc']:.4f}"
+                log_msg = (
+                    f"Epoch {epoch+1}/{epochs} | Loss: {self.train_losses[-1]:.4f}\n"
+                    f"Val Metrics:\n"
+                    f"- AUC: {val_metrics['auc']:.4f} | AP: {val_metrics['ap']:.4f}\n"
+                    f"- Accuracy: {val_metrics['accuracy']:.4f}\n"
+                    f"- Precision: {val_metrics['precision']:.4f}\n"
+                    f"- Recall: {val_metrics['recall']:.4f}\n"
+                    f"- F1: {val_metrics['f1']:.4f}\n"
+                    f"Confusion Matrix:\n{val_metrics['confusion_matrix']}"
+                )
                 self._log_message(log_msg)
         
         self._plot_training_curve()
-        return best_val_auc
+        
+        # Load best model and get final metrics
+        self.discriminator.load_state_dict(torch.load('best_discriminator.pt'))
+        final_metrics = self._validate(val_loader)
+        
+        # Generate classification report
+        preds, labels = [], []
+        with torch.no_grad():
+            for emb_active, emb_passive, y in val_loader:
+                outputs = self.discriminator(emb_active, emb_passive).squeeze()
+                preds.extend(outputs.tolist())
+                labels.extend(y.tolist())
+        
+        preds_binary = (np.array(preds) > 0.5).astype(int)
+        report = classification_report(labels, preds_binary, target_names=['Shuffled', 'Real'])
+        
+        # Log final results
+        self._log_message("\nFinal Validation Metrics:")
+        self._log_message(f"AUC: {final_metrics['auc']:.4f}")
+        self._log_message(f"Average Precision: {final_metrics['ap']:.4f}")
+        self._log_message(f"Accuracy: {final_metrics['accuracy']:.4f}")
+        self._log_message(f"Precision: {final_metrics['precision']:.4f}")
+        self._log_message(f"Recall: {final_metrics['recall']:.4f}")
+        self._log_message(f"F1 Score: {final_metrics['f1']:.4f}")
+        self._log_message("\nConfusion Matrix:")
+        self._log_message(str(final_metrics['confusion_matrix']))
+        self._log_message("\nClassification Report:")
+        self._log_message(report)
+        
+        return final_metrics['auc']
     
     def _create_loader(self, X, indices, batch_size, shuffle):
         dataset = TensorDataset(
@@ -148,10 +185,18 @@ class EmbeddingDiscriminatorAttack:
                 preds.extend(outputs.tolist())
                 labels.extend(y.tolist())
         
+        preds_np = np.array(preds)
+        labels_np = np.array(labels)
+        preds_binary = (preds_np > 0.5).astype(int)
+        
         return {
-            'auc': roc_auc_score(labels, preds),
-            'ap': average_precision_score(labels, preds),
-            'accuracy': accuracy_score(labels, (np.array(preds) > 0.5).astype(int))
+            'auc': roc_auc_score(labels_np, preds_np),
+            'ap': average_precision_score(labels_np, preds_np),
+            'accuracy': accuracy_score(labels_np, preds_binary),
+            'precision': precision_score(labels_np, preds_binary),
+            'recall': recall_score(labels_np, preds_binary),
+            'f1': f1_score(labels_np, preds_binary),
+            'confusion_matrix': confusion_matrix(labels_np, preds_binary)
         }
     
     def _plot_training_curve(self):
@@ -171,27 +216,33 @@ def run_discriminator_attack():
     client1_train = np.load('splitted_data/client_1_train.npy')
     client2_train = np.load('splitted_data/client_2_train.npy')
     
-    # Load models
-    checkpoint = torch.load('Models/best_vfl_model.pt')
-    
-    # Initialize models
+    # Initialize models with YOUR architecture
     active_bottom = BottomModel(input_dim=client1_train.shape[1]).to(device)
     passive_bottom = BottomModel(input_dim=client2_train.shape[1]).to(device)
-    active_bottom.load_state_dict(checkpoint['client1_bottom'])
-    passive_bottom.load_state_dict(checkpoint['client2_bottom'])
+    
+    # Get embeddings to determine actual output dimension
+    with torch.no_grad():
+        test_input = torch.FloatTensor(client1_train[:1]).to(device)
+        emb_dim = active_bottom(test_input).shape[1]
+    
+    # Now load the pretrained weights with strict=False
+    checkpoint = torch.load('Models/best_vfl_model.pt')
+    active_bottom.load_state_dict(checkpoint['client1_bottom'], strict=False)
+    passive_bottom.load_state_dict(checkpoint['client2_bottom'], strict=False)
+    
     active_bottom.eval()
     passive_bottom.eval()
     
-    # Get embeddings
+    # Get all embeddings
     with torch.no_grad():
         active_embs = active_bottom(torch.FloatTensor(client1_train).to(device)).cpu().numpy()
         passive_embs = passive_bottom(torch.FloatTensor(client2_train).to(device)).cpu().numpy()
     
-    # Initialize and run attack
+    # Initialize and run attack with actual embedding dimension
     attacker = EmbeddingDiscriminatorAttack(
         active_dim=client1_train.shape[1],
         passive_dim=client2_train.shape[1],
-        emb_dim=active_embs.shape[1]
+        emb_dim=emb_dim  # Use actual embedding size from your model
     )
     best_auc = attacker.train_model(active_embs, passive_embs, epochs=500)
     

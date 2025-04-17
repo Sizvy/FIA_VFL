@@ -6,6 +6,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import accuracy_score, f1_score
 from opacus import PrivacyEngine
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.modules.module")
+
 
 def load_client_data(client_id):
     """Load and normalize data"""
@@ -86,7 +89,7 @@ class TopModel(nn.Module):
 
 def train_one_epoch(client1_loader, client2_loader, models, optimizers, criterion, device):
     client1_bottom, client2_bottom, top_model = models
-    optimizer1, optimizer2 = optimizers
+    optimizer1, optimizer2_bottom, optimizer_top = optimizers
     
     client1_bottom.train()
     client2_bottom.train()
@@ -104,7 +107,8 @@ def train_one_epoch(client1_loader, client2_loader, models, optimizers, criterio
         
         # Backward pass
         optimizer1.zero_grad()
-        optimizer2.zero_grad()
+        optimizer2_bottom.zero_grad()
+        optimizer_top.zero_grad()
         
         loss = criterion(outputs, y)
         loss.backward()
@@ -115,7 +119,8 @@ def train_one_epoch(client1_loader, client2_loader, models, optimizers, criterio
         torch.nn.utils.clip_grad_norm_(top_model.parameters(), 1.0)
         
         optimizer1.step()
-        optimizer2.step()
+        optimizer2_bottom.step()
+        optimizer_top.step()
         
         running_loss += loss.item()
     
@@ -151,8 +156,8 @@ def validate(client1_loader, client2_loader, models, criterion, device):
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_epochs = 100
-    patience = 15
+    num_epochs = 50
+    patience = 12
     batch_size = 128  # Increased batch size
     
     # Load and verify data
@@ -185,13 +190,12 @@ def main():
     
     # Optimizers with learning rate scheduling
     optimizer1 = optim.AdamW(client1_bottom.parameters(), lr=0.001)
-    optimizer2 = optim.AdamW(
-        list(client2_bottom.parameters()) + list(top_model.parameters()), 
-        lr=0.001
-    )
+    optimizer2_bottom = optim.Adam(client2_bottom.parameters(), lr=0.001)
+    optimizer_top = optim.Adam(top_model.parameters(), lr=0.001)
     
     scheduler1 = optim.lr_scheduler.CosineAnnealingLR(optimizer1, T_max=num_epochs)
-    scheduler2 = optim.lr_scheduler.CosineAnnealingLR(optimizer2, T_max=num_epochs)
+    scheduler2_bottom = optim.lr_scheduler.CosineAnnealingLR(optimizer2_bottom, T_max=num_epochs)
+    scheduler_top = optim.lr_scheduler.CosineAnnealingLR(optimizer_top, T_max=num_epochs)
     
     # Privacy engine with careful parameters
     privacy_engine = PrivacyEngine()
@@ -199,8 +203,18 @@ def main():
         module=client1_bottom,
         optimizer=optimizer1,
         data_loader=train_loader1,
-        noise_multiplier=0.7,  # Reduced noise
-        max_grad_norm=1.0,
+        noise_multiplier=1.7,  # Reduced noise
+        max_grad_norm=0.5,
+        poisson_sampling=False  # For deterministic batches
+    )
+
+    privacy_engine2 = PrivacyEngine()
+    client2_bottom, optimizer2_bottom, train_loader2 = privacy_engine.make_private(
+        module=client2_bottom,
+        optimizer=optimizer2_bottom,
+        data_loader=train_loader2,
+        noise_multiplier=1.7,  # Reduced noise
+        max_grad_norm=0.5,
         poisson_sampling=False  # For deterministic batches
     )
     
@@ -214,7 +228,7 @@ def main():
         train_loss = train_one_epoch(
             train_loader1, train_loader2,
             [client1_bottom, client2_bottom, top_model],
-            [optimizer1, optimizer2],
+            [optimizer1, optimizer2_bottom, optimizer_top],
             criterion, device
         )
         
@@ -225,7 +239,8 @@ def main():
         )
         
         scheduler1.step()
-        scheduler2.step()
+        scheduler2_bottom.step()
+        scheduler_top.step()
         
         print(f"Epoch {epoch+1}/{num_epochs}:")
         print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")

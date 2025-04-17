@@ -7,6 +7,9 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import accuracy_score, f1_score
 from opacus import PrivacyEngine
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.modules.module")
+
 def load_client_data(client_id):
     """Load and normalize data"""
     assert client_id in [1, 2], "Client ID must be 1 or 2"
@@ -45,7 +48,7 @@ def create_dataloaders(*data, batch_size=64):
     return loaders
 
 class BottomModel(nn.Module):
-    def __init__(self, input_dim=24, hidden_dim=64, output_dim=32):
+    def __init__(self, input_dim=24, hidden_dim=64, output_dim=64):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
@@ -143,8 +146,8 @@ def validate(client1_loader, client2_loader, models, criterion, device):
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_epochs = 100  # Increased epochs
-    patience = 20     # More patience
+    num_epochs = 25  # Increased epochs
+    patience = 5     # More patience
     batch_size = 128  # Larger batch size
     
     # Load and verify data

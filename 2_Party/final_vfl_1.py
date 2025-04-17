@@ -44,7 +44,7 @@ def create_dataloaders(*data, batch_size=64):
     return loaders
 
 class BottomModel(nn.Module):
-    def __init__(self, input_dim=24, hidden_dim=64, output_dim=32):
+    def __init__(self, input_dim=24, hidden_dim=64, output_dim=64):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
@@ -142,8 +142,8 @@ def validate(client1_loader, client2_loader, models, criterion, device):
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_epochs = 100  # Increased epochs
-    patience = 20     # More patience
+    num_epochs = 50   # Increased epochs
+    patience = 5     # More patience
     batch_size = 128  # Larger batch size
     
     # Load and verify data

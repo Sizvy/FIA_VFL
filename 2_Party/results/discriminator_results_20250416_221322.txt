@@ -1,0 +1,283 @@
+VFL Embedding Discriminator Attack Results
+==================================================
+Start Time: 2025-04-16 22:13:22.978116
+
+Model Architecture:
+- Active Dim: 24
+- Passive Dim: 24
+- Embedding Dim: 64
+==================================================
+
+Epoch 20/500 | Loss: 0.6153
+Val Metrics:
+- AUC: 0.7002 | AP: 0.6568
+- Accuracy: 0.6395
+- Precision: 0.6381
+- Recall: 0.6374
+- F1: 0.6378
+Confusion Matrix:
+[[4524 2527]
+ [2535 4456]]
+Epoch 40/500 | Loss: 0.5908
+Val Metrics:
+- AUC: 0.7150 | AP: 0.6668
+- Accuracy: 0.6532
+- Precision: 0.6552
+- Recall: 0.6404
+- F1: 0.6477
+Confusion Matrix:
+[[4695 2356]
+ [2514 4477]]
+Epoch 60/500 | Loss: 0.5712
+Val Metrics:
+- AUC: 0.7524 | AP: 0.7154
+- Accuracy: 0.6805
+- Precision: 0.6393
+- Recall: 0.8219
+- F1: 0.7192
+Confusion Matrix:
+[[3809 3242]
+ [1245 5746]]
+Epoch 80/500 | Loss: 0.5553
+Val Metrics:
+- AUC: 0.7590 | AP: 0.7131
+- Accuracy: 0.6968
+- Precision: 0.6798
+- Recall: 0.7392
+- F1: 0.7083
+Confusion Matrix:
+[[4617 2434]
+ [1823 5168]]
+Epoch 100/500 | Loss: 0.5407
+Val Metrics:
+- AUC: 0.7751 | AP: 0.7283
+- Accuracy: 0.6962
+- Precision: 0.7149
+- Recall: 0.6483
+- F1: 0.6800
+Confusion Matrix:
+[[5244 1807]
+ [2459 4532]]
+Epoch 120/500 | Loss: 0.5283
+Val Metrics:
+- AUC: 0.7586 | AP: 0.7145
+- Accuracy: 0.6892
+- Precision: 0.6855
+- Recall: 0.6943
+- F1: 0.6899
+Confusion Matrix:
+[[4824 2227]
+ [2137 4854]]
+Epoch 140/500 | Loss: 0.5188
+Val Metrics:
+- AUC: 0.7997 | AP: 0.7486
+- Accuracy: 0.7270
+- Precision: 0.7277
+- Recall: 0.7218
+- F1: 0.7247
+Confusion Matrix:
+[[5163 1888]
+ [1945 5046]]
+Epoch 160/500 | Loss: 0.5135
+Val Metrics:
+- AUC: 0.7892 | AP: 0.7424
+- Accuracy: 0.7215
+- Precision: 0.6750
+- Recall: 0.8495
+- F1: 0.7523
+Confusion Matrix:
+[[4192 2859]
+ [1052 5939]]
+Epoch 180/500 | Loss: 0.5029
+Val Metrics:
+- AUC: 0.7945 | AP: 0.7509
+- Accuracy: 0.7278
+- Precision: 0.7085
+- Recall: 0.7703
+- F1: 0.7381
+Confusion Matrix:
+[[4835 2216]
+ [1606 5385]]
+Epoch 200/500 | Loss: 0.4964
+Val Metrics:
+- AUC: 0.7938 | AP: 0.7450
+- Accuracy: 0.7146
+- Precision: 0.7282
+- Recall: 0.6807
+- F1: 0.7037
+Confusion Matrix:
+[[5275 1776]
+ [2232 4759]]
+Epoch 220/500 | Loss: 0.4896
+Val Metrics:
+- AUC: 0.7992 | AP: 0.7507
+- Accuracy: 0.7206
+- Precision: 0.7325
+- Recall: 0.6910
+- F1: 0.7112
+Confusion Matrix:
+[[5287 1764]
+ [2160 4831]]
+Epoch 240/500 | Loss: 0.4847
+Val Metrics:
+- AUC: 0.7970 | AP: 0.7486
+- Accuracy: 0.7284
+- Precision: 0.7236
+- Recall: 0.7352
+- F1: 0.7294
+Confusion Matrix:
+[[5088 1963]
+ [1851 5140]]
+Epoch 260/500 | Loss: 0.4801
+Val Metrics:
+- AUC: 0.8001 | AP: 0.7516
+- Accuracy: 0.7329
+- Precision: 0.6981
+- Recall: 0.8166
+- F1: 0.7527
+Confusion Matrix:
+[[4582 2469]
+ [1282 5709]]
+Epoch 280/500 | Loss: 0.4744
+Val Metrics:
+- AUC: 0.8095 | AP: 0.7581
+- Accuracy: 0.7404
+- Precision: 0.7233
+- Recall: 0.7751
+- F1: 0.7483
+Confusion Matrix:
+[[4978 2073]
+ [1572 5419]]
+Epoch 300/500 | Loss: 0.4708
+Val Metrics:
+- AUC: 0.7825 | AP: 0.7307
+- Accuracy: 0.7156
+- Precision: 0.6806
+- Recall: 0.8078
+- F1: 0.7387
+Confusion Matrix:
+[[4401 2650]
+ [1344 5647]]
+Epoch 320/500 | Loss: 0.4647
+Val Metrics:
+- AUC: 0.7993 | AP: 0.7464
+- Accuracy: 0.7212
+- Precision: 0.7291
+- Recall: 0.7002
+- F1: 0.7143
+Confusion Matrix:
+[[5232 1819]
+ [2096 4895]]
+Epoch 340/500 | Loss: 0.4604
+Val Metrics:
+- AUC: 0.8215 | AP: 0.7657
+- Accuracy: 0.7562
+- Precision: 0.7169
+- Recall: 0.8435
+- F1: 0.7751
+Confusion Matrix:
+[[4722 2329]
+ [1094 5897]]
+Epoch 360/500 | Loss: 0.4576
+Val Metrics:
+- AUC: 0.7873 | AP: 0.7378
+- Accuracy: 0.6986
+- Precision: 0.7342
+- Recall: 0.6187
+- F1: 0.6715
+Confusion Matrix:
+[[5485 1566]
+ [2666 4325]]
+Epoch 380/500 | Loss: 0.4544
+Val Metrics:
+- AUC: 0.8011 | AP: 0.7482
+- Accuracy: 0.7249
+- Precision: 0.7242
+- Recall: 0.7226
+- F1: 0.7234
+Confusion Matrix:
+[[5127 1924]
+ [1939 5052]]
+Epoch 400/500 | Loss: 0.4507
+Val Metrics:
+- AUC: 0.7994 | AP: 0.7437
+- Accuracy: 0.7201
+- Precision: 0.7243
+- Recall: 0.7068
+- F1: 0.7154
+Confusion Matrix:
+[[5170 1881]
+ [2050 4941]]
+Epoch 420/500 | Loss: 0.4451
+Val Metrics:
+- AUC: 0.8352 | AP: 0.7737
+- Accuracy: 0.7712
+- Precision: 0.7380
+- Recall: 0.8378
+- F1: 0.7848
+Confusion Matrix:
+[[4972 2079]
+ [1134 5857]]
+Epoch 440/500 | Loss: 0.4445
+Val Metrics:
+- AUC: 0.8309 | AP: 0.7767
+- Accuracy: 0.7634
+- Precision: 0.7492
+- Recall: 0.7890
+- F1: 0.7686
+Confusion Matrix:
+[[5204 1847]
+ [1475 5516]]
+Epoch 460/500 | Loss: 0.4400
+Val Metrics:
+- AUC: 0.8434 | AP: 0.7846
+- Accuracy: 0.7810
+- Precision: 0.7420
+- Recall: 0.8588
+- F1: 0.7961
+Confusion Matrix:
+[[4963 2088]
+ [ 987 6004]]
+Epoch 480/500 | Loss: 0.4359
+Val Metrics:
+- AUC: 0.8087 | AP: 0.7560
+- Accuracy: 0.7390
+- Precision: 0.7294
+- Recall: 0.7564
+- F1: 0.7426
+Confusion Matrix:
+[[5089 1962]
+ [1703 5288]]
+Epoch 500/500 | Loss: 0.4324
+Val Metrics:
+- AUC: 0.7919 | AP: 0.7336
+- Accuracy: 0.7229
+- Precision: 0.6887
+- Recall: 0.8093
+- F1: 0.7441
+Confusion Matrix:
+[[4493 2558]
+ [1333 5658]]
+
+Final Validation Metrics:
+AUC: 0.8448
+Average Precision: 0.7910
+Accuracy: 0.7798
+Precision: 0.7488
+Recall: 0.8394
+F1 Score: 0.7915
+
+Confusion Matrix:
+[[5082 1969]
+ [1123 5868]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+    Shuffled       0.82      0.72      0.77      7051
+        Real       0.75      0.84      0.79      6991
+
+    accuracy                           0.78     14042
+   macro avg       0.78      0.78      0.78     14042
+weighted avg       0.78      0.78      0.78     14042
+
