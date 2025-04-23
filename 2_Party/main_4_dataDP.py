@@ -6,7 +6,7 @@ from opacus import PrivacyEngine
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.modules.module")
-from models.simpleBottom import BottomModel
+from models.averageBottom import BottomModel
 from models.simpleTop import TopModel
 from data.data_loader_dp import load_client_data, create_dataloaders
 from training.train_utils import train_one_epoch
@@ -20,10 +20,6 @@ def main():
     
     # ===== New DP Parameters =====
     input_dp_epsilon = 10.0
-
-    # Load and verify data
-    #client1_data = load_client_data(1)
-    #client2_data = load_client_data(2)
     
     # Load data with input DP
     client1_data = load_client_data(1, dp_epsilon=input_dp_epsilon)
