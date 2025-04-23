@@ -8,19 +8,28 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.modules.module")
 from models.simpleBottom import BottomModel
 from models.simpleTop import TopModel
-from data.data_loader import load_client_data, create_dataloaders
+from data.data_loader_dp import load_client_data, create_dataloaders
 from training.train_utils import train_one_epoch
 from training.validation_utils import validate
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_epochs = 50   # Increased epochs
-    patience = 5     # More patience
-    batch_size = 128  # Larger batch size
+    num_epochs = 50 
+    patience = 5     
+    batch_size = 128
     
+    # ===== New DP Parameters =====
+    input_dp_epsilon = 4.0  # Privacy budget for input perturbation
+    gradient_dp_epsilon = 2.0  # Target privacy budget for gradient DP
+    delta = 1e-5  # Privacy failure probability
+
     # Load and verify data
-    client1_data = load_client_data(1)
-    client2_data = load_client_data(2)
+    #client1_data = load_client_data(1)
+    #client2_data = load_client_data(2)
+    
+    # Load data with input DP
+    client1_data = load_client_data(1, dp_epsilon=input_dp_epsilon)
+    client2_data = load_client_data(2, dp_epsilon=input_dp_epsilon)
     
     print(f"Client 1 samples: {len(client1_data[0])}")
     print(f"Client 2 samples: {len(client2_data[0])}")
@@ -42,6 +51,11 @@ def main():
     optimizer1 = optim.AdamW(client1_bottom.parameters(), lr=0.001, weight_decay=1e-4)
     optimizer2_bottom = optim.Adam(client2_bottom.parameters(), lr=0.001)
     optimizer_top = optim.Adam(top_model.parameters(), lr=0.001)
+    
+    privacy_engine = PrivacyEngine(
+        accountant="rdp",  # Renyi Differential Privacy accountant
+        secure_mode=False  # Disable for better performance
+    )
 
     # Privacy engine with adjusted parameters
     privacy_engine = PrivacyEngine()
@@ -136,7 +150,14 @@ def main():
     print("\nFinal Results:")
     print(f"Test Accuracy: {test_acc:.4f}")
     print(f"Test F1: {test_f1:.4f}")
-    print(f"Privacy Budget (ε): {privacy_engine.get_epsilon(delta=1e-5):.2f}")
+
+    gradient_epsilon = privacy_engine.get_epsilon(delta=delta)
+    total_epsilon = input_dp_epsilon + gradient_epsilon  # Basic composition
+    
+    print("\nPrivacy Budget:")
+    print(f"- Input DP (ε): {input_dp_epsilon:.2f}")
+    print(f"- Gradient DP (ε): {gradient_epsilon:.2f}")
+    print(f"- Total (ε): {total_epsilon:.2f} (δ={delta})")
 
 if __name__ == "__main__":
     main()

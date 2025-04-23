@@ -50,7 +50,7 @@ def main():
         optimizer=optimizer1,
         data_loader=train_loader1,
         noise_multiplier=1.2,  # Reduced noise for better accuracy
-        max_grad_norm=1.0,
+        max_grad_norm=0.5,
         poisson_sampling=False
     )
 
@@ -61,7 +61,7 @@ def main():
         optimizer=optimizer2_bottom,
         data_loader=train_loader2,
         noise_multiplier=1.2,
-        max_grad_norm=1.0,
+        max_grad_norm=0.5,
         poisson_sampling=False
     )
 

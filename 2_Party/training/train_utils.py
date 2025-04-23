@@ -30,6 +30,10 @@ def train_one_epoch(client1_loader, client2_loader,
         
         # Backward pass with gradient clipping
         loss = criterion(outputs, y)
+        if torch.isnan(loss).any():
+            print("NaN detected in loss! Skipping batch")
+            optimizer1.zero_grad()
+            continue
         loss.backward()
         
         # Gradient clipping for all models

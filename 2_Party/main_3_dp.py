@@ -6,7 +6,7 @@ from opacus import PrivacyEngine
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.modules.module")
-from models.simpleBottom import BottomModel
+from models.averageBottom import BottomModel
 from models.complexTop import TopModel
 from data.data_loader import load_client_data, create_dataloaders
 from training.train_utils import train_one_epoch
@@ -14,7 +14,7 @@ from training.validation_utils import validate
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_epochs = 50   # Increased epochs
+    num_epochs = 25   # Increased epochs
     patience = 5     # More patience
     batch_size = 128  # Larger batch size
     
@@ -64,6 +64,14 @@ def main():
         max_grad_norm=1.0,
         poisson_sampling=False
     )
+
+    # Print noise statistics
+    sigma = 1.2 * 1.0  # noise_multiplier * max_grad_norm
+    variance = sigma ** 2
+    print("\nNoise Parameters:")
+    print(f"Standard deviation (σ): {sigma:.4f}")
+    print(f"Variance (σ²): {variance:.4f}")
+    print(f"Applied per parameter in gradient updates\n")
 
     # Learning rate scheduler
     scheduler1 = optim.lr_scheduler.CosineAnnealingLR(optimizer1, T_max=num_epochs)

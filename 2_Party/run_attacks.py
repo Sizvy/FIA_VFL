@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from models.simpleBottom import BottomModel
+from models.averageBottom import BottomModel
 from attacks.embedding_discriminator import EmbeddingDiscriminatorAttack
 
 def load_embeddings():
