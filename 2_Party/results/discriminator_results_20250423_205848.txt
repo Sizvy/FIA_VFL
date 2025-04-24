@@ -1,5 +1,0 @@
-VFL Embedding Discriminator Attack Results
-Start Time: 2025-04-23 20:58:48.096021
-
-Epoch 20/500 | Loss: 0.6889
-Val AUC: 0.4334 | Accuracy: 0.4590

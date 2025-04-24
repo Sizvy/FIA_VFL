@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from torch.nn.utils import spectral_norm
 from datetime import datetime
 import os
-from final_vfl_5 import BottomModel
+from models.averageBottom import BottomModel
 
 class Discriminator(nn.Module):
     """Standalone discriminator to distinguish real vs shuffled passive embeddings"""
@@ -226,7 +226,7 @@ def run_discriminator_attack():
         emb_dim = active_bottom(test_input).shape[1]
     
     # Now load the pretrained weights with strict=False
-    checkpoint = torch.load('Models/best_vfl_model.pt')
+    checkpoint = torch.load('Saved_Models/best_vfl_model.pt')
     active_bottom.load_state_dict(checkpoint['client1_bottom'], strict=False)
     passive_bottom.load_state_dict(checkpoint['client2_bottom'], strict=False)
     

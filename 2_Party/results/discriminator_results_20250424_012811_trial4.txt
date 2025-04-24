@@ -1,3 +1,0 @@
-VFL Embedding Discriminator Attack Results - Trial 4
-Start Time: 2025-04-24 01:28:11.532536
-
