@@ -5,10 +5,10 @@ class BottomModel(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
+            nn.ELU(),
             nn.Dropout(0.3),
             nn.Linear(hidden_dim, output_dim),
-            nn.ReLU()
+            nn.ELU()
         )
 
     def forward(self, x):

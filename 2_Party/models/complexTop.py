@@ -8,11 +8,11 @@ class TopModel(nn.Module):
             nn.Linear(input_dim, 256),
             nn.GroupNorm(4, 256),
             nn.ELU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.4),
             
             nn.Linear(256, 128),
             nn.GroupNorm(4, 128),
-            nn.GELU(),
+            nn.ELU(),
             nn.Dropout(0.3),
             
             nn.Linear(128, 64),

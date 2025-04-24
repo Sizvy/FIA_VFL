@@ -1,0 +1,56 @@
+VFL Embedding Discriminator Attack Results - Trial 0
+Start Time: 2025-04-24 01:13:00.509456
+
+Epoch 20/300 | Loss: 0.6736
+Val AUC: 0.5231 | Accuracy: 0.5189
+F1: 0.5222 | Precision: 0.5165 | Recall: 0.5280
+Epoch 40/300 | Loss: 0.6595
+Val AUC: 0.5208 | Accuracy: 0.5127
+F1: 0.4996 | Precision: 0.5111 | Recall: 0.4886
+Epoch 60/300 | Loss: 0.6467
+Val AUC: 0.5174 | Accuracy: 0.5153
+F1: 0.5189 | Precision: 0.5129 | Recall: 0.5251
+Epoch 80/300 | Loss: 0.6348
+Val AUC: 0.5118 | Accuracy: 0.5160
+F1: 0.5538 | Precision: 0.5118 | Recall: 0.6033
+Epoch 100/300 | Loss: 0.6233
+Val AUC: 0.5110 | Accuracy: 0.5055
+F1: 0.4326 | Precision: 0.5045 | Recall: 0.3786
+Epoch 120/300 | Loss: 0.6129
+Val AUC: 0.5061 | Accuracy: 0.5073
+F1: 0.4872 | Precision: 0.5056 | Recall: 0.4700
+Epoch 140/300 | Loss: 0.6033
+Val AUC: 0.5058 | Accuracy: 0.5068
+F1: 0.5332 | Precision: 0.5041 | Recall: 0.5659
+Epoch 160/300 | Loss: 0.5943
+Val AUC: 0.5052 | Accuracy: 0.5066
+F1: 0.5542 | Precision: 0.5037 | Recall: 0.6161
+Epoch 180/300 | Loss: 0.5846
+Val AUC: 0.4989 | Accuracy: 0.4999
+F1: 0.4454 | Precision: 0.4972 | Recall: 0.4034
+Epoch 200/300 | Loss: 0.5757
+Val AUC: 0.5000 | Accuracy: 0.5051
+F1: 0.5569 | Precision: 0.5024 | Recall: 0.6247
+Epoch 220/300 | Loss: 0.5669
+Val AUC: 0.4984 | Accuracy: 0.4997
+F1: 0.4485 | Precision: 0.4970 | Recall: 0.4085
+Epoch 240/300 | Loss: 0.5573
+Val AUC: 0.5001 | Accuracy: 0.5026
+F1: 0.4735 | Precision: 0.5006 | Recall: 0.4491
+Epoch 260/300 | Loss: 0.5510
+Val AUC: 0.4938 | Accuracy: 0.4996
+F1: 0.5053 | Precision: 0.4976 | Recall: 0.5132
+Epoch 280/300 | Loss: 0.5417
+Val AUC: 0.4964 | Accuracy: 0.5024
+F1: 0.5245 | Precision: 0.5003 | Recall: 0.5511
+Epoch 300/300 | Loss: 0.5347
+Val AUC: 0.4956 | Accuracy: 0.4999
+F1: 0.4794 | Precision: 0.4975 | Recall: 0.4625
+
+=== Final Metrics ===
+AUC: 0.5278
+AP: 0.5136
+ACCURACY: 0.5228
+PRECISION: 0.5209
+RECALL: 0.5180
+F1: 0.5194

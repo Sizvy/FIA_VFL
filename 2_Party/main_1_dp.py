@@ -6,7 +6,7 @@ from opacus import PrivacyEngine
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.modules.module")
-from models.simpleBottom import BottomModel
+from models.averageBottom import BottomModel
 from models.simpleTop import TopModel
 from data.data_loader import load_client_data, create_dataloaders
 from training.train_utils import train_one_epoch

@@ -20,20 +20,30 @@ def load_embeddings():
     
     return active_embs, passive_embs
 
-def run_attack():
+def evaluate_attack(n_trials=10):
     active_embs, passive_embs = load_embeddings()
-    
-    # Get embedding dimension from first sample
     emb_dim = active_embs.shape[1]
     
-    attacker = EmbeddingDiscriminatorAttack(
-        active_dim=active_embs.shape[1],
-        passive_dim=passive_embs.shape[1],
-        emb_dim=emb_dim
-    )
+    all_metrics = []
     
-    best_auc = attacker.train_model(active_embs, passive_embs)
-    print(f"Best Validation AUC: {best_auc:.4f}")
+    for trial in range(n_trials):
+        print(f"\n=== Trial {trial+1}/{n_trials} ===")
+        torch.manual_seed(trial)
+        np.random.seed(trial)
+        
+        attacker = EmbeddingDiscriminatorAttack(
+            active_dim=active_embs.shape[1],
+            passive_dim=passive_embs.shape[1],
+            emb_dim=emb_dim
+        )
+        
+        metrics = attacker.train_model(active_embs, passive_embs)
+        all_metrics.append(metrics)
+    
+    print("\n=== Final Results ===")
+    for metric in ['auc', 'accuracy', 'f1', 'precision', 'recall']:
+        values = [m[metric] for m in all_metrics]
+        print(f"{metric.upper()}: {np.mean(values):.4f} ± {np.std(values):.4f}")
 
 if __name__ == "__main__":
-    run_attack()
+    evaluate_attack(n_trials=10)

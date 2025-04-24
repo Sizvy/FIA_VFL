@@ -2,7 +2,7 @@ import os
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from models.simpleBottom import BottomModel
+from models.averageBottom import BottomModel
 from models.complexTop import TopModel
 from data.data_loader import load_client_data, create_dataloaders
 from training.train_utils import train_one_epoch
@@ -32,7 +32,7 @@ def main():
     # Initialize models
     client1_bottom = BottomModel(input_dim=client1_data[0].shape[1], output_dim=64).to(device)
     client2_bottom = BottomModel(input_dim=client2_data[0].shape[1], output_dim=64).to(device)
-    top_model = TopModel().to(device)
+    top_model = TopModel(input_dim=128).to(device)
 
     # Enhanced optimizers with weight decay
     optimizer1 = optim.AdamW(client1_bottom.parameters(), lr=0.001, weight_decay=1e-4)
@@ -45,7 +45,7 @@ def main():
     scheduler_top = optim.lr_scheduler.CosineAnnealingLR(optimizer_top, T_max=num_epochs)
 
     # Label smoothing for better generalization
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+    criterion = nn.CrossEntropyLoss()
 
     best_val_acc = 0.0
     counter = 0
