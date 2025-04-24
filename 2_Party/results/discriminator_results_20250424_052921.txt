@@ -1,6 +1,6 @@
 VFL Embedding Discriminator Attack Results
 ==================================================
-Start Time: 2025-04-24 04:32:20.093027
+Start Time: 2025-04-24 05:29:21.256869
 
 Model Architecture:
 - Active Dim: 24
@@ -8,13 +8,13 @@ Model Architecture:
 - Embedding Dim: 64
 ==================================================
 
-Epoch 20/500 | Loss: 0.5983
+Epoch 20/500 | Loss: 0.6031
 Val Metrics:
-- AUC: 0.7350 | AP: 0.6986
-- Accuracy: 0.6738
-- Precision: 0.6414
-- Recall: 0.7820
-- F1: 0.7047
+- AUC: 0.6772 | AP: 0.6244
+- Accuracy: 0.6230
+- Precision: 0.6269
+- Recall: 0.5996
+- F1: 0.6130
 Confusion Matrix:
-[[3994 3057]
- [1524 5467]]
+[[4556 2495]
+ [2799 4192]]

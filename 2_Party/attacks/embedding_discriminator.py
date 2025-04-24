@@ -51,7 +51,7 @@ class EmbeddingDiscriminatorAttack:
         if print_msg:
             print(message)
 
-    def train_model(self, active_embs, passive_embs, epochs=500, batch_size=512):
+    def train_model(self, active_embs, passive_embs, epochs=200, batch_size=512):
         """Train discriminator to detect correlated embeddings"""
         # Create dataset: label=1 for real pairs, label=0 for shuffled pairs
         idx = np.random.permutation(len(active_embs))
