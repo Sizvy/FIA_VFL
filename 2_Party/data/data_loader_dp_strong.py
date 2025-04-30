@@ -21,9 +21,9 @@ def add_dp_noise(data, epsilon, delta=1e-5):
 def load_client_data(client_id, dp_epsilon=None):
     """Improved data loading with better DP handling"""
     # Load raw data
-    train_data = np.load(f'splitted_data_strong/client_{client_id}_train.npy')
-    val_data = np.load(f'splitted_data_strong/client_{client_id}_val.npy')
-    test_data = np.load(f'splitted_data_strong/client_{client_id}_test.npy')
+    train_data = np.load(f'splitted_data_weak/client_{client_id}_train.npy')
+    val_data = np.load(f'splitted_data_weak/client_{client_id}_val.npy')
+    test_data = np.load(f'splitted_data_weak/client_{client_id}_test.npy')
     
     # Store original stats for validation/test normalization
     original_mean = train_data.mean(axis=0)
@@ -40,7 +40,7 @@ def load_client_data(client_id, dp_epsilon=None):
         train_data = add_dp_noise(train_data, dp_epsilon)
         
         # Verify noise levels
-        noise_pct = np.abs(train_data - np.load(f'splitted_data_strong/client_{client_id}_train.npy')).mean() / original_std.mean()
+        noise_pct = np.abs(train_data - np.load(f'splitted_data_weak/client_{client_id}_train.npy')).mean() / original_std.mean()
         print(f"Added {noise_pct*100:.2f}% noise relative to feature std")
     
     # Normalize using StandardScaler for better numerical stability
@@ -50,9 +50,9 @@ def load_client_data(client_id, dp_epsilon=None):
     test_data = (test_data - scaler.mean_) / (scaler.scale_ + 1e-8)
     
     if client_id == 1:
-        y_train = np.load('splitted_data_strong/client_1_train_labels.npy')
-        y_val = np.load('splitted_data_strong/client_1_val_labels.npy')
-        y_test = np.load('splitted_data_strong/client_1_test_labels.npy')
+        y_train = np.load('splitted_data_weak/client_1_train_labels.npy')
+        y_val = np.load('splitted_data_weak/client_1_val_labels.npy')
+        y_test = np.load('splitted_data_weak/client_1_test_labels.npy')
         return train_data, val_data, test_data, y_train, y_val, y_test
     
     return train_data, val_data, test_data

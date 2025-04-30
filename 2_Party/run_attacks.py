@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from models.simpleBottom_strong import BottomModel
+from models.averageBottom import BottomModel
 from attacks.embedding_discriminator import EmbeddingDiscriminatorAttack
 
 def run_single_trial(trial_num, client1_train, client2_train, emb_dim):
@@ -48,8 +48,8 @@ def run_single_trial(trial_num, client1_train, client2_train, emb_dim):
 
 def run_discriminator_attack():
     # Load data once (shared across all trials)
-    client1_train = np.load('splitted_data_strong/client_1_train.npy')
-    client2_train = np.load('splitted_data_strong/client_2_train.npy')
+    client1_train = np.load('splitted_data/client_1_train.npy')
+    client2_train = np.load('splitted_data/client_2_train.npy')
 
     # Determine embedding dimension once
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
