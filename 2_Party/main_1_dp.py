@@ -14,7 +14,7 @@ from training.validation_utils import validate
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_epochs = 50   # Increased epochs
+    num_epochs = 25   # Increased epochs
     patience = 5     # More patience
     batch_size = 128  # Larger batch size
     

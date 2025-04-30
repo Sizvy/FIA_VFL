@@ -1,18 +1,6 @@
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.utils.data import DataLoader, TensorDataset
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (roc_auc_score, accuracy_score, precision_score, 
-                            recall_score, f1_score, confusion_matrix, 
-                            average_precision_score, classification_report)
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
-from torch.nn.utils import spectral_norm
-from datetime import datetime
-import os
-from models.averageBottom import BottomModel
+from models.simpleBottom_strong import BottomModel
 from attacks.embedding_discriminator import EmbeddingDiscriminatorAttack
 
 def run_single_trial(trial_num, client1_train, client2_train, emb_dim):
@@ -46,26 +34,22 @@ def run_single_trial(trial_num, client1_train, client2_train, emb_dim):
     torch.manual_seed(42 + trial_num)
     np.random.seed(42 + trial_num)
     
-    best_auc = attacker.train_model(active_embs, passive_embs, epochs=500)
+    best_auc = attacker.train_model(active_embs, passive_embs, epochs=100)
     
-    # Get final metrics from the attacker
-    final_metrics = {
-        'auc': best_auc,
-        'accuracy': attacker.val_metrics[-1]['accuracy'],
-        'f1': attacker.val_metrics[-1]['f1'],
-        'precision': attacker.val_metrics[-1]['precision'],
-        'recall': attacker.val_metrics[-1]['recall']
-    }
+    # Get final metrics by running validation
+    final_metrics = attacker.validate_final(active_embs, passive_embs)
     
-    print(f"\nTrial {trial_num+1} Best Validation AUC: {best_auc:.4f}")
-    print(f"Results saved to: {attacker.log_file}")
+    print(f"\nTrial {trial_num+1} Results:")
+    print(f"AUC: {final_metrics['auc']:.4f}")
+    print(f"Accuracy: {final_metrics['accuracy']:.4f}")
+    print(f"F1: {final_metrics['f1']:.4f}")
     
     return final_metrics
 
 def run_discriminator_attack():
     # Load data once (shared across all trials)
-    client1_train = np.load('splitted_data/client_1_train.npy')
-    client2_train = np.load('splitted_data/client_2_train.npy')
+    client1_train = np.load('splitted_data_strong/client_1_train.npy')
+    client2_train = np.load('splitted_data_strong/client_2_train.npy')
 
     # Determine embedding dimension once
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

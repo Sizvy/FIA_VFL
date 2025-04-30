@@ -6,9 +6,9 @@ from opacus import PrivacyEngine
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.modules.module")
-from models.averageBottom import BottomModel
+from models.averageBottom_strong import BottomModel
 from models.simpleTop import TopModel
-from data.data_loader_dp import load_client_data, create_dataloaders
+from data.data_loader_dp_strong import load_client_data, create_dataloaders
 from training.train_utils import train_one_epoch
 from training.validation_utils import validate
 
@@ -19,7 +19,7 @@ def main():
     batch_size = 128
     
     # ===== New DP Parameters =====
-    input_dp_epsilon = 2.0  # Privacy budget for input perturbation
+    input_dp_epsilon = 1.0  # Privacy budget for input perturbation
     gradient_dp_epsilon = 2.0  # Target privacy budget for gradient DP
     delta = 1e-5  # Privacy failure probability
     

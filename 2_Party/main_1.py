@@ -2,9 +2,9 @@ import os
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from models.averageBottom import BottomModel
+from models.simpleBottom_strong import BottomModel
 from models.simpleTop import TopModel
-from data.data_loader import load_client_data, create_dataloaders
+from data.data_loader_strong import load_client_data, create_dataloaders
 from training.train_utils import train_one_epoch
 from training.validation_utils import validate
 
