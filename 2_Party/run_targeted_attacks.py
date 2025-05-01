@@ -1,32 +1,15 @@
 import os
 import numpy as np
 import torch
-import pandas as pd
-from sklearn.feature_selection import mutual_info_regression
+from torch.utils.data import DataLoader, TensorDataset
 from models.averageBottom import BottomModel
+from models.simpleTop import TopModel
 from attacks.feature_inference import FeatureInferenceAttack
 from utils.evaluate import evaluate_attack
 
 def load_data(client_num, split='train'):
     """Load numpy array for specified client and split"""
     return np.load(f'splitted_data/client_{client_num}_{split}.npy')
-
-def analyze_feature_correlations(active_embs, passive_data):
-    """Analyze correlations between active embeddings and passive features"""
-    correlations = []
-    
-    for col in range(passive_data.shape[1]):
-        # Handle both continuous and categorical features
-        if len(np.unique(passive_data[:, col])) > 10:  # Continuous feature
-            mi = mutual_info_regression(active_embs, passive_data[:, col])
-        else:  # Categorical feature
-            mi = mutual_info_regression(active_embs, passive_data[:, col], discrete_features=[False]*active_embs.shape[1])
-        
-        correlations.append((col, np.mean(mi)))
-    
-    # Sort by correlation strength
-    correlations.sort(key=lambda x: x[1], reverse=True)
-    return correlations[:10]  # Return top 10
 
 def create_evaluation_set(passive_train, passive_val, passive_test, target_idx):
     """Create evaluation set with perfect label consistency"""
@@ -38,7 +21,7 @@ def create_evaluation_set(passive_train, passive_val, passive_test, target_idx):
         std_dev = np.std(real_values)
         synthetic = np.random.normal(
             loc=np.mean(real_values),
-            scale=std_dev/3,  # Tightly clustered around real values
+            scale=std_dev/3,
             size=len(real_values)
         )
         # Filter out any synthetic values that accidentally match real ones
@@ -74,67 +57,87 @@ def main():
     # 2. Load trained models from utility training
     checkpoint = torch.load('Saved_Models/best_vfl_model.pt')
     
-    # Load data
-    active_raw = load_data(1, 'train')
+    # Load data - active client can only access their own raw data
+    active_train = load_data(1, 'train')
     passive_train = load_data(2, 'train')
-    
+    passive_val = load_data(2, 'val')
+    passive_test = load_data(2, 'test')
+
     # Initialize models WITH TRAINED WEIGHTS
-    active_model = BottomModel(input_dim=active_raw.shape[1]).to(device)
+    active_model = BottomModel(input_dim=active_train.shape[1]).to(device)
     active_model.load_state_dict(checkpoint['client1_bottom'])
     
     passive_model = BottomModel(input_dim=passive_train.shape[1]).to(device)
     passive_model.load_state_dict(checkpoint['client2_bottom'])
+    
+    top_model = TopModel().to(device)
+    top_model.load_state_dict(checkpoint['top_model'])
 
     # Generate embeddings using trained models
     with torch.no_grad():
-        active_embs = active_model(torch.FloatTensor(active_raw).to(device)).cpu().numpy()
+        # Active client can generate embeddings for their data
+        active_train_embs = active_model(torch.FloatTensor(active_train).to(device)).cpu().numpy()
+        
+        # Passive embeddings available during training
         passive_train_embs = passive_model(torch.FloatTensor(passive_train).to(device)).cpu().numpy()
+        
+        # For evaluation only
+        passive_val_embs = passive_model(torch.FloatTensor(passive_val).to(device)).cpu().numpy()
+        passive_test_embs = passive_model(torch.FloatTensor(passive_test).to(device)).cpu().numpy()
 
-    # Analyze feature correlations
-    top_features = analyze_feature_correlations(active_embs, passive_train)
-    print("\nTop 10 Correlated Features in Passive Client:")
-    print("Index\t| Feature Type\t| Correlation Strength")
-    print("---------------------------------------------")
-    for idx, corr in top_features:
-        feature_type = "Continuous" if len(np.unique(passive_train[:, idx])) > 10 else "Categorical"
-        print(f"{idx}\t| {feature_type}\t| {corr:.4f}")
-    
-    # Select most correlated feature
-    target_feature_idx = top_features[0][0]
-    print(f"\nAutomatically selected target feature: Column {target_feature_idx}")
-
-    # Load remaining passive data
-    passive_val = load_data(2, 'val')
-    passive_test = load_data(2, 'test')
+    # Manually set target feature index
+    target_feature_idx = 0  # Change this to the column index you want to attack
+    print(f"\nTarget feature selected: Column {target_feature_idx}")
+    print(f"Feature type: {'Continuous' if len(np.unique(passive_train[:, target_feature_idx])) > 10 else 'Categorical'}")
 
     # Create evaluation set
     eval_values, y_true = create_evaluation_set(
         passive_train, passive_val, passive_test, target_feature_idx
     )
 
-    # Initialize and train attack model
-    attacker = FeatureInferenceAttack(target_feature_idx, active_embs.shape[1], device)
-    attacker.train(active_embs, passive_train_embs, active_raw)
+    # Initialize attack model with correct embedding dimension
+    attacker = FeatureInferenceAttack(
+        target_feature_idx=target_feature_idx,
+        emb_dim=active_train_embs.shape[1],  # Dimension of single party's embeddings
+        device=device
+    )
+    
+    # Train attack model using only what active client has access to:
+    # - Active raw features (for labels)
+    # - Active embeddings (from their bottom model)
+    # - Passive embeddings (from joint training)
+    attacker.train(
+        active_embs=active_train_embs,
+        passive_embs=passive_train_embs,
+        active_raw=active_train
+    )
 
+    # Prepare evaluation data
+    all_passive_embs = np.concatenate([passive_train_embs, passive_val_embs, passive_test_embs])
+    
     # Run inference
     y_pred, y_prob = [], []
-    template_sample = passive_train[0].copy()
+    num_samples = len(eval_values)
+    for i in range(num_samples):
+        passive_idx = i % len(all_passive_embs)
+        # Get embeddings with proper shape
+        active_emb = active_train_embs[0]  # Shape: [embedding_dim]
+        passive_emb = all_passive_embs[passive_idx]  # Shape: [embedding_dim]
     
-    for value in eval_values:
-        sample = template_sample.copy()
-        sample[target_feature_idx] = value
-        
-        with torch.no_grad():
-            active_emb = active_model(torch.FloatTensor(active_raw[0:1]).to(device)).cpu().numpy()
-            passive_emb = passive_model(torch.FloatTensor(sample[None,:]).to(device)).cpu().numpy()
-        
+        # Ensure they're numpy arrays
+        if isinstance(active_emb, torch.Tensor):
+            active_emb = active_emb.cpu().numpy()
+        if isinstance(passive_emb, torch.Tensor):
+            passive_emb = passive_emb.cpu().numpy()
+    
+        # Make prediction
         pred, prob = attacker.infer(active_emb, passive_emb)
         y_pred.append(pred)
         y_prob.append(prob)
 
     # Evaluate results
     metrics = evaluate_attack(y_true, y_pred, y_prob)
-    print("\n=== Attack Results with Perfect Label Consistency ===")
+    print("\n=== Attack Results ===")
     print(f"Target Feature Index: {target_feature_idx}")
     print(f"Feature Type: {'Continuous' if len(np.unique(passive_train[:, target_feature_idx])) > 10 else 'Categorical'}")
     print(f"Real Samples: {sum(y_true)} | Fake Samples: {len(y_true)-sum(y_true)}")
