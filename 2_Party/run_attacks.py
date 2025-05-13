@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from models.averageBottom import BottomModel
+from models.averageBottom_strong import BottomModel
 from attacks.embedding_discriminator import EmbeddingDiscriminatorAttack
 
 def run_single_trial(trial_num, client1_train, client2_train, emb_dim):

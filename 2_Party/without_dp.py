@@ -10,9 +10,9 @@ from training.validation_utils import validate
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_epochs = 50   # Increased epochs
-    patience = 5     # More patience
-    batch_size = 128  # Larger batch size
+    num_epochs = 50 
+    patience = 5    
+    batch_size = 128
     
     # Load and verify data
     client1_data = load_client_data(1)
@@ -43,9 +43,9 @@ def main():
     scheduler1 = optim.lr_scheduler.CosineAnnealingLR(optimizer1, T_max=num_epochs)
     scheduler2_bottom = optim.lr_scheduler.CosineAnnealingLR(optimizer2_bottom, T_max=num_epochs)
     scheduler_top = optim.lr_scheduler.CosineAnnealingLR(optimizer_top, T_max=num_epochs)
-
-    # Label smoothing for better generalization
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+ 
+    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.BCEWithLogitsLoss()
 
     best_val_acc = 0.0
     counter = 0

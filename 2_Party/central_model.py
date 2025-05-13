@@ -123,7 +123,7 @@ def train_model(model, train_loader, val_loader, num_epochs=50, patience=5):
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             counter = 0
-            torch.save(model.state_dict(), 'Models/merged_client_model_all_features.pt')
+            torch.save(model.state_dict(), 'Saved_Models/merged_client_model_all_features.pt')
         else:
             counter += 1
             if counter >= patience:

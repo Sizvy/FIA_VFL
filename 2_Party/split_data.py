@@ -5,11 +5,9 @@ from sklearn.model_selection import train_test_split
 
 # Create directories
 os.makedirs('splitted_data', exist_ok=True)
-os.makedirs('Models', exist_ok=True)
-os.makedirs('Results', exist_ok=True)
 
 # Load the dataset
-data = pd.read_csv('../datasets/drive_cleaned.csv', header=None)
+data = pd.read_csv('../../datasets/drive_cleaned.csv', header=None)
 
 # Shuffle the dataset
 data = data.sample(frac=1, random_state=42).reset_index(drop=True)
@@ -24,12 +22,12 @@ X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, r
 
 # Distribute features among 2 clients
 num_clients = 2
-features_per_client = X_train.shape[1] // num_clients
+features_per_client = (X_train.shape[1] + num_clients - 1) // num_clients
 
 for i in range(num_clients):
     start_idx = i * features_per_client
-    end_idx = (i + 1) * features_per_client if i != num_clients - 1 else X_train.shape[1]
-
+    # end_idx = (i + 1) * features_per_client if i != num_clients - 1 else X_train.shape[1]
+    end_idx = min((i + 1) * features_per_client, X_train.shape[1])
     # Save the features for each client in .npy format
     np.save(f'splitted_data/client_{i+1}_train.npy', X_train[:, start_idx:end_idx])
     np.save(f'splitted_data/client_{i+1}_val.npy', X_val[:, start_idx:end_idx])

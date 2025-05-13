@@ -13,7 +13,6 @@ def validate(client1_loader, client2_loader, models, criterion, device):
     with torch.no_grad():
         for (x1, y), (x2,) in zip(client1_loader, client2_loader):
             x1, x2, y = x1.to(device), x2.to(device), y.to(device)
-            
             h1 = client1_bottom(x1)
             h2 = client2_bottom(x2)
             outputs = top_model(torch.cat([h1, h2], dim=1))
