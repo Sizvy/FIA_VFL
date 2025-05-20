@@ -24,8 +24,8 @@ for i in range(X.shape[1]):
     correlations.append(abs(corr))  # Use absolute correlation
 
 # Get indices of top 20 features
-top_n = 10
-top_features = np.argsort(correlations)[-top_n:][::-1]  # Indices of top 20 features (most correlated first)
+top_n = 20
+top_features = np.argsort(correlations)[-top_n:][::-1]  # Indices of top 20 features
 
 print("Top 20 features by correlation:")
 print(top_features)
@@ -38,19 +38,13 @@ X_top = X[:, top_features]
 X_train, X_temp, y_train, y_temp = train_test_split(X_top, y, test_size=0.4, random_state=42)
 X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
-# Step 3: Distribute features among 2 clients (REVERSED ORDER)
+# Step 3: Distribute features among 2 clients
 num_clients = 2
 features_per_client = X_train.shape[1] // num_clients
 
 for i in range(num_clients):
-    # Client 2 (i=1) gets the MOST correlated features (first half)
-    # Client 1 (i=0) gets the LESS correlated features (second half)
-    if i == 1:  # Passive client (Client 2) gets top features
-        start_idx = 0
-        end_idx = features_per_client
-    else:  # Active client (Client 1) gets remaining features
-        start_idx = features_per_client
-        end_idx = X_train.shape[1]
+    start_idx = i * features_per_client
+    end_idx = (i + 1) * features_per_client if i != num_clients - 1 else X_train.shape[1]
 
     # Save the features for each client in .npy format
     np.save(f'splitted_data_strong/client_{i+1}_train.npy', X_train[:, start_idx:end_idx])
@@ -75,5 +69,5 @@ pd.DataFrame(y_test, columns=['label']).to_csv('splitted_data_strong/client_1_te
 print("\nDataset with top correlated features split and saved successfully in splitted_data_strong folder")
 print(f"Total features selected: {X_train.shape[1]}")
 print(f"Features per client: {features_per_client}")
-print("Client 1 (active) gets features (less correlated):", top_features[features_per_client:])
-print("Client 2 (passive) gets features (most correlated):", top_features[:features_per_client])
+print("Client 1 gets features:", top_features[:features_per_client])
+print("Client 2 gets features:", top_features[features_per_client:])

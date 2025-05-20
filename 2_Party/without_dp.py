@@ -32,7 +32,7 @@ def main():
     # Initialize models
     client1_bottom = BottomModel(input_dim=client1_data[0].shape[1], output_dim=64).to(device)
     client2_bottom = BottomModel(input_dim=client2_data[0].shape[1], output_dim=64).to(device)
-    top_model = TopModel().to(device)
+    top_model = TopModel(num_classes=2).to(device)
 
     # Enhanced optimizers with weight decay
     optimizer1 = optim.AdamW(client1_bottom.parameters(), lr=0.001, weight_decay=1e-4)
