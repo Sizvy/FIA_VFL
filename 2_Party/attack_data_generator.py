@@ -3,32 +3,37 @@ import os
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, WeightedRandomSampler
 from sklearn.metrics import accuracy_score, f1_score
 
 os.makedirs('attack_model_data', exist_ok=True)
 
-class ShadowBottomModel(nn.Module):
-    def __init__(self, input_dim=48, hidden_dim=64, output_dim=128):
+class EnhancedShadowBottomModel(nn.Module):
+    def __init__(self, input_dim=48, hidden_dim=128, output_dim=128):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(hidden_dim, output_dim),
-            nn.ReLU()
+            nn.BatchNorm1d(hidden_dim),
+            nn.LeakyReLU(0.1),
+            nn.Dropout(0.2),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.LeakyReLU(0.1),
+            nn.Linear(hidden_dim, output_dim)
         )
 
     def forward(self, x):
         return self.net(x)
 
-class ShadowTopModel(nn.Module):
+class EnhancedShadowTopModel(nn.Module):
     def __init__(self, input_dim=128, num_classes=11):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, num_classes)
+            nn.Linear(input_dim, 128),
+            nn.BatchNorm1d(128),
+            nn.LeakyReLU(0.1),
+            nn.Dropout(0.2),
+            nn.Linear(128, num_classes)
         )
 
     def forward(self, x):
@@ -51,16 +56,32 @@ def train_shadow_models():
         X_test = torch.FloatTensor(test_data[:, :-1])
         y_test = torch.LongTensor(test_data[:, -1])
         
+        # Class balancing
+        class_counts = np.bincount(y_train.numpy())
+        weights = 1. / class_counts[y_train]
+        sampler = WeightedRandomSampler(weights, len(weights))
+        
         train_dataset = TensorDataset(X_train, y_train)
         test_dataset = TensorDataset(X_test, y_test)
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=sampler)
         test_loader = DataLoader(test_dataset, batch_size=batch_size)
         
-        bottom_model = ShadowBottomModel(input_dim=X_train.shape[1]).to(device)
-        top_model = ShadowTopModel().to(device)
+        bottom_model = EnhancedShadowBottomModel(input_dim=X_train.shape[1]).to(device)
+        top_model = EnhancedShadowTopModel().to(device)
         
-        optimizer_bottom = optim.Adam(bottom_model.parameters(), lr=0.001)
-        optimizer_top = optim.Adam(top_model.parameters(), lr=0.001)
+        # Improved optimizer configuration
+        optimizer = optim.AdamW([
+            {'params': bottom_model.parameters()},
+            {'params': top_model.parameters()}
+        ], lr=0.001, weight_decay=1e-4)
+        
+        scheduler = optim.lr_scheduler.OneCycleLR(
+            optimizer, 
+            max_lr=0.01,
+            steps_per_epoch=len(train_loader),
+            epochs=num_epochs
+        )
+        
         criterion = nn.CrossEntropyLoss()
         
         # Training loop
@@ -72,16 +93,19 @@ def train_shadow_models():
                 inputs = inputs.to(device)
                 labels = labels.to(device)
                 
-                optimizer_bottom.zero_grad()
-                optimizer_top.zero_grad()
+                optimizer.zero_grad()
                 
+                # Forward pass
                 embeddings = bottom_model(inputs)
                 outputs = top_model(embeddings)
                 loss = criterion(outputs, labels)
                 
+                # Backward pass
                 loss.backward()
-                optimizer_bottom.step()
-                optimizer_top.step()
+                torch.nn.utils.clip_grad_norm_(bottom_model.parameters(), 1.0)
+                torch.nn.utils.clip_grad_norm_(top_model.parameters(), 1.0)
+                optimizer.step()
+                scheduler.step()
         
         # Evaluation on test set
         bottom_model.eval()
@@ -114,6 +138,7 @@ def train_shadow_models():
                     inputs = inputs.to(device)
                     embeddings = bottom_model(inputs)
                     outputs = top_model(embeddings)
+                    print(outputs)
                     
                     for emb, out in zip(embeddings.cpu().numpy(), outputs.cpu().numpy()):
                         if label == 1:
