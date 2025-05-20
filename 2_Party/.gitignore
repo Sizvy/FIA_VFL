@@ -5,3 +5,6 @@ splitted_data
 splitted_data_strong
 splitted_data_weak
 best_discriminator.pt
+shadow_model_data
+training_curve.png
+attack_model_data
