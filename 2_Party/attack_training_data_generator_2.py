@@ -5,6 +5,10 @@ import torch.optim as optim
 import numpy as np
 from torch.utils.data import DataLoader, TensorDataset, WeightedRandomSampler
 from sklearn.metrics import accuracy_score, f1_score
+# from models.averageBottom import BottomModel
+# from models.simpleTop import TopModel
+from models.complexBottom import BottomModel
+from models.simpleTop import TopModel
 
 os.makedirs('attack_model_data', exist_ok=True)
 
@@ -66,8 +70,11 @@ def train_shadow_models():
         train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=sampler)
         test_loader = DataLoader(test_dataset, batch_size=batch_size)
         
-        bottom_model = EnhancedShadowBottomModel(input_dim=X_train.shape[1]).to(device)
-        top_model = EnhancedShadowTopModel().to(device)
+        #bottom_model = EnhancedShadowBottomModel(input_dim=X_train.shape[1]).to(device)
+        #top_model = EnhancedShadowTopModel().to(device)
+
+        bottom_model = BottomModel(input_dim=X_train.shape[1]).to(device)
+        top_model = TopModel(input_dim=64).to(device)
         
         # Improved optimizer configuration
         optimizer = optim.AdamW([
@@ -138,6 +145,7 @@ def train_shadow_models():
                     inputs = inputs.to(device)
                     embeddings = bottom_model(inputs)
                     outputs = top_model(embeddings)
+                    # probs = torch.softmax(outputs, dim=1)
             
                     for emb, pred_vec, class_label in zip(embeddings.cpu().numpy(),
                                                 outputs.cpu().numpy(),
