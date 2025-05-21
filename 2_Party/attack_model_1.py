@@ -3,7 +3,9 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from torch.utils.data import DataLoader, TensorDataset, random_split
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 class AttackModel(nn.Module):
     def __init__(self, input_dim=192, hidden_dim=128, output_dim=1):
@@ -21,6 +23,16 @@ class AttackModel(nn.Module):
     
     def forward(self, x):
         return self.net(x)
+
+def plot_confusion_matrix(cm, classes):
+    plt.figure(figsize=(6, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=classes, yticklabels=classes)
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+    plt.title('Confusion Matrix')
+    plt.savefig('attack_model_data/confusion_matrix.png')
+    plt.close()
 
 def train_attack_model():
     # Load attack data
@@ -86,19 +98,25 @@ def train_attack_model():
         acc = accuracy_score(all_labels, all_preds)
         f1 = f1_score(all_labels, all_preds)
         auc = roc_auc_score(all_labels, all_probs)
+        cm = confusion_matrix(all_labels, all_preds)
         train_loss /= len(train_loader)
         
         scheduler.step(auc)
         
-        print(f"Epoch {epoch+1}:")
+        print(f"\nEpoch {epoch+1}:")
         print(f"Train Loss: {train_loss:.4f} | Test Acc: {acc:.4f}")
         print(f"Test F1: {f1:.4f} | Test AUC: {auc:.4f}")
+        print("Confusion Matrix:")
+        print(cm)
         
         # Save best model
         if auc > best_auc:
             best_auc = auc
             torch.save(model.state_dict(), 'attack_model_data/best_attack_model.pt')
             print("Saved new best model")
+            
+            # Plot and save best confusion matrix
+            plot_confusion_matrix(cm, classes=['Out', 'In'])
     
     print(f"\nFinal Best AUC: {best_auc:.4f}")
 

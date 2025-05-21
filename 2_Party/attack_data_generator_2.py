@@ -131,21 +131,27 @@ def train_shadow_models():
         print(f"Shadow Model {i} Test Performance:")
         print(f"Accuracy: {acc:.4f}, F1 Score: {f1:.4f}")
         
-        # Collect data for attack model
+        # Add this in your shadow model training code (after evaluation)
         with torch.no_grad():
-            for loader, label in [(train_loader, 1), (test_loader, 0)]:
-                for inputs, _ in loader:
+            for loader, membership_label in [(train_loader, 1), (test_loader, 0)]:
+                for inputs, class_labels in loader:  # Now capturing original class labels
                     inputs = inputs.to(device)
                     embeddings = bottom_model(inputs)
                     outputs = top_model(embeddings)
-                    print(outputs)
-                    
-                    for emb, out in zip(embeddings.cpu().numpy(), outputs.cpu().numpy()):
-                        if label == 1:
-                            attack_train_data.append(np.concatenate([emb, out, [label]]))
+            
+                    for emb, pred_vec, class_label in zip(embeddings.cpu().numpy(),
+                                                outputs.cpu().numpy(),
+                                                class_labels.cpu().numpy()):
+                        record = np.concatenate([
+                            pred_vec,           # 11-dim prediction vector
+                            [class_label],      # Original class label
+                            [membership_label]  # 1 for 'in', 0 for 'out'
+                        ])
+                
+                        if membership_label == 1:
+                            attack_train_data.append(record)
                         else:
-                            attack_test_data.append(np.concatenate([emb, out, [label]]))
-    
+                            attack_test_data.append(record) 
     np.save(f'attack_model_data/attack_train_data.npy', np.array(attack_train_data))
     np.save(f'attack_model_data/attack_test_data.npy', np.array(attack_test_data))
 
