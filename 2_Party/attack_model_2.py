@@ -122,7 +122,7 @@ def train_attack_model():
         
         if auc > best_auc:
             best_auc = auc
-            torch.save(model.state_dict(), 'attack_model_data/best_attack_model.pt')
+            torch.save(model.state_dict(), 'Saved_Models/best_attack_model.pt')
             plot_confusion_matrix(cm, classes=['Out', 'In'])
             print("Saved new best model")
     
