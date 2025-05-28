@@ -22,11 +22,13 @@ shadow_data_size = 20000
 train_ratio = 1
 shadow_total = total_shadow_models * shadow_data_size
 
+target_feature_idx = -2
 shadow_data = filtered_data[:shadow_total]
 victim_data = filtered_data[shadow_total:]
+victim_data_without_F = np.delete(victim_data, target_feature_idx, axis=1)
 
-np.save(f'../shadow_model_data/victim_data.npy', victim_data)
-np.save(f'../shadow_model_data/shadow_data.npy', shadow_data)
+np.save(f'../shadow_model_data/victim_data.npy', victim_data_without_F)
+# np.save(f'../shadow_model_data/shadow_data.npy', shadow_data)
 
 # Split and save shadow models
 # for i in range(1, total_shadow_models + 1):
