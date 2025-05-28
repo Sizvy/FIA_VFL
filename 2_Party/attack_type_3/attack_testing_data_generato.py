@@ -4,12 +4,14 @@ import torch.optim as optim
 import torch.nn as nn
 import numpy as np
 from torch.utils.data import TensorDataset, DataLoader
-from models.complexBottom import BottomModel
+from models.averageBottom import BottomModel
 from models.simpleTop import TopModel
 from data.data_loader import load_client_data, create_dataloaders
 from training.train_utils import train_one_epoch
 from training.validation_utils import validate
 
+
+os.makedirs('attack_model_data', exist_ok=True)
 def get_all_outputs(models, loaders1, loaders2, device):
     """Get outputs for all data splits"""
     client1_bottom, client2_bottom, top_model = models
@@ -37,7 +39,9 @@ def get_all_outputs(models, loaders1, loaders2, device):
                 out1 = client1_bottom(data1)
                 out2 = client2_bottom(data2)
                 h_combined = torch.cat([out1, out2], dim=1)
-                outputs = top_model(h_combined).cpu().numpy()
+                outputs = top_model(h_combined)
+                # probs = torch.softmax(outputs, dim=1)
+                # prob_vec = probs.cpu().numpy()
             # Get labels (only available from client1)
             if labels is not None:
                 labels = labels.cpu().numpy()
@@ -146,7 +150,7 @@ def main():
     # Combine into final array: [outputs, labels, membership]
     attack_data = np.column_stack([outputs, labels, membership])
     
-    np.save('attack_model_data/victim_outputs.npy', attack_data)
+    np.save('attack_model_data/testing_outputs.npy', attack_data)
     
     print("\nVictim model outputs saved successfully:")
     print(f"- Total samples: {len(attack_data)}")

@@ -37,9 +37,9 @@ def plot_confusion_matrix(cm, classes):
 
 def train_attack_model():
     # Load attack data
-    attack_train_data = np.load('attack_model_data/attack_train_data.npy')
-    attack_test_data = np.load('attack_model_data/attack_test_data.npy')
-    all_data = np.concatenate([attack_train_data, attack_test_data])
+    all_data = np.load('attack_model_data/training_outputs.npy')
+    # attack_test_data = np.load('attack_model_data/attack_test_data.npy')
+    # all_data = np.concatenate([attack_train_data, attack_test_data])
     
     print(f"Total records for attack model: {len(all_data):,}")
     print(f" - 'In' samples: {np.sum(all_data[:,-1] == 1):,}")

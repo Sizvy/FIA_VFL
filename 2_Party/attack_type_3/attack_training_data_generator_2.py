@@ -145,10 +145,10 @@ def train_shadow_models():
                     inputs = inputs.to(device)
                     embeddings = bottom_model(inputs)
                     outputs = top_model(embeddings)
-                    # probs = torch.softmax(outputs, dim=1)
+                    probs = torch.softmax(outputs, dim=1)
             
                     for emb, pred_vec, class_label in zip(embeddings.cpu().numpy(),
-                                                outputs.cpu().numpy(),
+                                                probs.cpu().numpy(),
                                                 class_labels.cpu().numpy()):
                         record = np.concatenate([
                             pred_vec,           # 11-dim prediction vector

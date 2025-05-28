@@ -5,7 +5,7 @@ class TopModel(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, 64),
-            nn.ReLU(),
+            # nn.ReLU(),
             nn.Linear(64, num_classes)
         )
 

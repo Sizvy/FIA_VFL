@@ -5,9 +5,9 @@ from sklearn.model_selection import train_test_split
 
 # Create directories
 os.makedirs('../splitted_data', exist_ok=True)
-
-# Load the victim data
 victim_data = np.load('../shadow_model_data/victim_data.npy')
+# Load the victim data
+# victim_data = np.load('../shadow_model_data/victim_data.npy')
 
 # Separate features and labels (assuming last column is label)
 X = victim_data[:, :-1]
