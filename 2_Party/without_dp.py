@@ -68,10 +68,10 @@ def main():
         scheduler2_bottom.step()
         scheduler_top.step()
         
-        print(f"Epoch {epoch+1}/{num_epochs}:")
-        print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
-        print(f"Val Acc: {val_acc:.4f} | Val F1: {val_f1:.4f}")
-        print(f"Current LR: {optimizer1.param_groups[0]['lr']:.6f}")
+        # print(f"Epoch {epoch+1}/{num_epochs}:")
+        # print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
+        # print(f"Val Acc: {val_acc:.4f} | Val F1: {val_f1:.4f}")
+        # print(f"Current LR: {optimizer1.param_groups[0]['lr']:.6f}")
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc

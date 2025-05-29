@@ -20,15 +20,15 @@ shadow_data_size = 20000
 shadow_data = filtered_data[:shadow_data_size]
 victim_data = filtered_data[shadow_data_size:]
 
-victim_data_without_F = np.delete(victim_data, target_feature_idx, axis=1)
-print(f"\nVictim data shape after removing F: {victim_data_without_F.shape}")
+# victim_data_without_F = np.delete(victim_data, target_feature_idx, axis=1)
+# print(f"\nVictim data shape after removing F: {victim_data_without_F.shape}")
 
-removed_feature = top_n_features[target_feature_idx]
-print(f"Removed feature from victim data: '{removed_feature}' (Index {target_feature_idx})")
+# removed_feature = top_n_features[target_feature_idx]
+# print(f"Removed feature from victim data: '{removed_feature}' (Index {target_feature_idx})")
 
-np.save('../shadow_model_data/victim_data.npy', victim_data_without_F)
+np.save('../shadow_model_data/victim_data.npy', victim_data)
 np.save('../shadow_model_data/shadow_data.npy', shadow_data)    
 
 print("\nData preparation complete:")
 print(f"- Shadow data shape (with F): {shadow_data.shape}")
-print(f"- Victim data shape (without F): {victim_data_without_F.shape}")
+print(f"- Victim data shape (with F): {victim_data.shape}")

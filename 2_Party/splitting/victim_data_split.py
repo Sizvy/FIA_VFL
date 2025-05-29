@@ -36,13 +36,5 @@ np.save('../splitted_data/client_1_train_labels.npy', y_train)
 np.save('../splitted_data/client_1_val_labels.npy', y_val)
 np.save('../splitted_data/client_1_test_labels.npy', y_test)
 
-# Save the labels for the active client (Client 1) in .csv format
-pd.DataFrame(y_train, columns=['label']).to_csv('../splitted_data/client_1_train_labels.csv', index=False)
-pd.DataFrame(y_val, columns=['label']).to_csv('../splitted_data/client_1_val_labels.csv', index=False)
-pd.DataFrame(y_test, columns=['label']).to_csv('../splitted_data/client_1_test_labels.csv', index=False)
-
-print("Dataset split and saved successfully in both .npy and .csv formats.")
-print(f"Total features: {X_train.shape[1]}")
-print(f"Features per client: {features_per_client}")
 print("Client 1 gets features: 0 to", features_per_client - 1)
 print("Client 2 gets features:", features_per_client, "to", X_train.shape[1] - 1)
