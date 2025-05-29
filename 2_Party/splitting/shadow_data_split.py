@@ -26,7 +26,7 @@ victim_data = filtered_data[shadow_data_size:]
 # removed_feature = top_n_features[target_feature_idx]
 # print(f"Removed feature from victim data: '{removed_feature}' (Index {target_feature_idx})")
 
-np.save('../shadow_model_data/victim_data.npy', victim_data)
+np.save('../shadow_model_data/victim_data_initial.npy', victim_data)
 np.save('../shadow_model_data/shadow_data.npy', shadow_data)    
 
 print("\nData preparation complete:")

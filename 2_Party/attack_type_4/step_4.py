@@ -36,7 +36,7 @@ def load_distributions():
     return data["P_E_plus_F"].item(), data["P_E_minus_F"].item()
 
 # ===== QUERY TARGET MODEL =====
-def query_target_embeddings(model, X_data):
+def query_target_embeddings_1(model, X_data):
     dataset = TensorDataset(torch.FloatTensor(X_data))
     loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
     
@@ -47,6 +47,19 @@ def query_target_embeddings(model, X_data):
             emb = model(batch).cpu().numpy()
             embeddings.append(emb)
     return np.concatenate(embeddings, axis=0)
+
+def query_target_embeddings_2(model, X_data):
+    dataset = TensorDataset(torch.FloatTensor(X_data))
+    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
+
+    logit_scaled = []
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch[0].to(device)
+            logits = model(batch)  # Raw logits
+            confidences = torch.sigmoid(logits).cpu().numpy()  # Sigmoid
+            logit_scaled.append(np.log(confidences / (1 - confidences + 1e-10)))  # Logit scaling
+    return np.concatenate(logit_scaled, axis=0)
 
 # ===== MEMBERSHIP INFERENCE =====
 def compute_log_likelihood(emb, distribution):
@@ -73,7 +86,7 @@ if __name__ == "__main__":
         client2_dim=X_victim.shape[1]
     )
     
-    target_embeddings = query_target_embeddings(client2_bottom, X_victim)
+    target_embeddings = query_target_embeddings_2(client2_bottom, X_victim)
     print(f"Extracted {len(target_embeddings)} target embeddings")
 
     P_E_plus_F, P_E_minus_F = load_distributions()

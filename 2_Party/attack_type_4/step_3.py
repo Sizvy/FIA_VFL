@@ -19,7 +19,7 @@ def load_shadow_model(model_path, input_dim):
     model.eval()
     return model
 
-def extract_embeddings(model, X_data):
+def extract_embeddings_1(model, X_data):
     dataset = TensorDataset(torch.FloatTensor(X_data))
     loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
     
@@ -30,6 +30,19 @@ def extract_embeddings(model, X_data):
             emb = model(batch).cpu().numpy()
             embeddings.append(emb)
     return np.concatenate(embeddings, axis=0)
+
+def extract_embeddings_2(model, X_data):
+    dataset = TensorDataset(torch.FloatTensor(X_data))
+    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
+
+    logit_scaled = []
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch[0].to(device)
+            logits = model(batch)  # Get raw logits (pre-softmax)
+            confidences = torch.sigmoid(logits).cpu().numpy()  # Sigmoid to [0,1]
+            logit_scaled.append(np.log(confidences / (1 - confidences + 1e-10)))  # Logit scaling
+    return np.concatenate(logit_scaled, axis=0)
 
 def fit_distribution(embeddings):
     if DISTRIBUTION_TYPE == "gaussian":
@@ -63,10 +76,10 @@ if __name__ == "__main__":
     shadow_minus_F = load_shadow_model(SHADOW_MINUS_F_MODEL, X_minus_F.shape[1])
     
     print("Extracting embeddings for D+F...")
-    E_plus_F = extract_embeddings(shadow_plus_F, X_plus_F)
+    E_plus_F = extract_embeddings_2(shadow_plus_F, X_plus_F)
     
     print("Extracting embeddings for D-F...")
-    E_minus_F = extract_embeddings(shadow_minus_F, X_minus_F)
+    E_minus_F = extract_embeddings_2(shadow_minus_F, X_minus_F)
     
     print(f"Embedding shapes: With F {E_plus_F.shape}, Without F {E_minus_F.shape}")
     
