@@ -5,6 +5,7 @@ from scipy.stats import multivariate_normal
 from sklearn.neighbors import KernelDensity
 import matplotlib.pyplot as plt  # For visualization
 from averageBottom import BottomModel
+from sklearn.decomposition import PCA
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 128
@@ -35,14 +36,21 @@ def extract_embeddings_2(model, X_data):
     dataset = TensorDataset(torch.FloatTensor(X_data))
     loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-    logit_scaled = []
+    all_embeddings = []
     with torch.no_grad():
         for batch in loader:
             batch = batch[0].to(device)
-            logits = model(batch)  # Get raw logits (pre-softmax)
-            confidences = torch.sigmoid(logits).cpu().numpy()  # Sigmoid to [0,1]
-            logit_scaled.append(np.log(confidences / (1 - confidences + 1e-10)))  # Logit scaling
-    return np.concatenate(logit_scaled, axis=0)
+            logits = model(batch)
+            confidences = torch.sigmoid(logits).cpu().numpy()
+            logit_scaled = np.log(confidences / (1 - confidences + 1e-10))
+            all_embeddings.append(logit_scaled)
+
+    full_embeddings = np.concatenate(all_embeddings, axis=0)
+    return full_embeddings
+    # pca = PCA(n_components=10)
+    # reduced_embeddings = pca.fit_transform(full_embeddings)
+
+    # return reduced_embeddings
 
 def extract_embeddings_3(model, X_data):
     dataset = TensorDataset(torch.FloatTensor(X_data))
@@ -67,6 +75,7 @@ def fit_distribution_1(embeddings):
         return {"type": "gaussian", "mean": mean, "cov": cov}
     elif DISTRIBUTION_TYPE == "kde":
         kde = KernelDensity(kernel='gaussian', bandwidth=0.7).fit(embeddings)
+        # print(kde)
         return {"type": "kde", "kde": kde}
 
 def fit_distribution_2(embeddings):
@@ -123,6 +132,16 @@ if __name__ == "__main__":
     E_minus_F = extract_embeddings_2(shadow_minus_F, X_minus_F)
     
     print(f"Embedding shapes: With F {E_plus_F.shape}, Without F {E_minus_F.shape}")
+
+    # print("With_F mean:", np.mean(E_plus_F, axis=0))
+    # print("Without_F mean:", np.mean(E_minus_F, axis=0))
+    # print("\nWith_F std:", np.std(E_plus_F, axis=0))
+    # print("Without_F std:", np.std(E_minus_F, axis=0))
+
+    # Check for significant differences
+    mean_diff = np.abs(np.mean(E_plus_F - E_minus_F, axis=0))
+    # print("\nMean absolute difference:", mean_diff)
+    print("Max difference:", np.max(mean_diff))
     
     print("\nFitting distributions...")
     P_E_plus_F = fit_distribution_1(E_plus_F)

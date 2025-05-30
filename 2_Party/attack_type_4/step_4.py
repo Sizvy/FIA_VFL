@@ -5,6 +5,7 @@ from scipy.stats import multivariate_normal
 from sklearn.neighbors import KernelDensity
 from averageBottom import BottomModel
 from simpleTop import TopModel
+from sklearn.decomposition import PCA
 
 # ===== CONFIG =====
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -52,14 +53,22 @@ def query_target_embeddings_2(model, X_data):
     dataset = TensorDataset(torch.FloatTensor(X_data))
     loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-    logit_scaled = []
+    # Step 1: Collect all embeddings
+    all_embeddings = []
     with torch.no_grad():
         for batch in loader:
             batch = batch[0].to(device)
-            logits = model(batch)  # Raw logits
-            confidences = torch.sigmoid(logits).cpu().numpy()  # Sigmoid
-            logit_scaled.append(np.log(confidences / (1 - confidences + 1e-10)))  # Logit scaling
-    return np.concatenate(logit_scaled, axis=0)
+            logits = model(batch)
+            confidences = torch.sigmoid(logits).cpu().numpy()
+            logit_scaled = np.log(confidences / (1 - confidences + 1e-10))
+            all_embeddings.append(logit_scaled)
+    
+    # Step 2: Concatenate and apply PCA
+    full_embeddings = np.concatenate(all_embeddings, axis=0)
+    # pca = PCA(n_components=10)
+    # reduced_embeddings = pca.fit_transform(full_embeddings)
+    
+    return full_embeddings
 
 def query_target_embeddings_3(model, X_data):
     dataset = TensorDataset(torch.FloatTensor(X_data))
@@ -83,15 +92,6 @@ def compute_log_likelihood_1(emb, distribution):
         return multivariate_normal.logpdf(emb, mean=distribution["mean"], cov=distribution["cov"])
     elif distribution["type"] == "kde":
         return distribution["kde"].score_samples(emb.reshape(1, -1))[0]
-
-def run_attack(target_embeddings, P_E_plus_F, P_E_minus_F):
-    results = []
-    for emb in target_embeddings:
-        score_plus = compute_log_likelihood_1(emb, P_E_plus_F)
-        score_minus = compute_log_likelihood_1(emb, P_E_minus_F)
-        # print(f"\n{score_plus}-{score_minus}\n")
-        results.append(score_plus > score_minus)
-    return np.mean(results)
 
 def compute_log_likelihood_2(emb, distribution):
     if "hybrid" in distribution["type"]:
@@ -123,6 +123,50 @@ def compute_log_likelihood_2(emb, distribution):
     elif distribution["type"] == "kde":
         return distribution["kde"].score_samples(emb.reshape(1, -1))[0]
 
+def compute_log_likelihood_3(emb, distribution):
+    if distribution["type"] == "gaussian":
+        cov = distribution["cov"]
+        
+        # Fix 1: Ensure symmetry
+        cov = (cov + cov.T) / 2  
+        
+        # Fix 2: Add small diagonal noise if needed
+        min_eig = np.min(np.real(np.linalg.eigvals(cov)))
+        if min_eig < 1e-8:
+            cov += np.eye(cov.shape[0]) * 1e-6
+            
+        return multivariate_normal.logpdf(
+            emb, 
+            mean=distribution["mean"], 
+            cov=cov,
+            allow_singular=True  # Critical addition
+        )
+    elif distribution["type"] == "kde":
+        return distribution["kde"].score_samples(emb.reshape(1, -1))[0]
+
+def run_attack_1(target_embeddings, P_E_plus_F, P_E_minus_F):
+    results = []
+    for emb in target_embeddings:
+        score_plus = compute_log_likelihood_1(emb, P_E_plus_F)
+        score_minus = compute_log_likelihood_1(emb, P_E_minus_F)
+        # print(f"\n{score_plus}-{score_minus}\n")
+        results.append(abs(score_plus - score_minus)>15.0)
+    return np.mean(results)
+
+def run_attack_2(target_embeddings, P_E_plus_F, P_E_minus_F):
+    ratios = []
+    for emb in target_embeddings:
+        log_p_plus = compute_log_likelihood_1(emb, P_E_plus_F)
+        log_p_minus = compute_log_likelihood_1(emb, P_E_minus_F)
+        ratios.append(log_p_plus - log_p_minus)
+    
+    # Convert to probabilities using sigmoid
+    prob_F_exists = 1 / (1 + np.exp(-np.array(ratios)))
+    # print(np.mean(prob_F_exists > 0.65))
+    # print(np.mean(prob_F_exists > 0.7))
+    # print(np.mean(prob_F_exists > 0.8))
+    return np.mean(prob_F_exists > 0.5)  
+
 # ===== MAIN EXECUTION =====
 if __name__ == "__main__":
     X_victim = np.load(VICTIM_DATA_PATH)
@@ -138,7 +182,7 @@ if __name__ == "__main__":
 
     P_E_plus_F, P_E_minus_F = load_distributions()
     
-    attack_success_rate = run_attack(target_embeddings, P_E_plus_F, P_E_minus_F)
+    attack_success_rate = run_attack_1(target_embeddings, P_E_plus_F, P_E_minus_F)
     
     print(f"\nAttack Results:")
     print(f"Probability that feature F exists in victim data: {attack_success_rate:.2%}")
