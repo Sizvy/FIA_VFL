@@ -71,10 +71,40 @@ def compute_log_likelihood(emb, distribution):
 def run_attack(target_embeddings, P_E_plus_F, P_E_minus_F):
     results = []
     for emb in target_embeddings:
-        score_plus = compute_log_likelihood(emb, P_E_plus_F)
-        score_minus = compute_log_likelihood(emb, P_E_minus_F)
+        score_plus = compute_log_likelihood_2(emb, P_E_plus_F)
+        score_minus = compute_log_likelihood_2(emb, P_E_minus_F)
         results.append(score_plus > score_minus)
-    return np.mean(results) 
+    return np.mean(results)
+
+def compute_log_likelihood_2(emb, distribution):
+    if "hybrid" in distribution["type"]:
+        # Split the input embedding
+        split_point = distribution.get("feature_split", emb.shape[0]//2)
+        raw = emb[:split_point]
+        logit = emb[split_point:]
+
+        if "gaussian" in distribution["type"]:
+            logp_raw = multivariate_normal.logpdf(
+                raw,
+                mean=distribution["raw_mean"],
+                cov=distribution["raw_cov"]
+            )
+            logp_logit = multivariate_normal.logpdf(
+                logit,
+                mean=distribution["logit_mean"],
+                cov=distribution["logit_cov"]
+            )
+        else:  # KDE
+            logp_raw = distribution["kde_raw"].score_samples(raw.reshape(1, -1))[0]
+            logp_logit = distribution["kde_logit"].score_samples(logit.reshape(1, -1))[0]
+
+        return logp_raw + logp_logit  # Combined log-likelihood
+
+    # Original non-hybrid case
+    elif distribution["type"] == "gaussian":
+        return multivariate_normal.logpdf(emb, mean=distribution["mean"], cov=distribution["cov"])
+    elif distribution["type"] == "kde":
+        return distribution["kde"].score_samples(emb.reshape(1, -1))[0]
 
 # ===== MAIN EXECUTION =====
 if __name__ == "__main__":
@@ -86,7 +116,7 @@ if __name__ == "__main__":
         client2_dim=X_victim.shape[1]
     )
     
-    target_embeddings = query_target_embeddings_2(client2_bottom, X_victim)
+    target_embeddings = query_target_embeddings_1(client2_bottom, X_victim)
     print(f"Extracted {len(target_embeddings)} target embeddings")
 
     P_E_plus_F, P_E_minus_F = load_distributions()
