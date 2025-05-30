@@ -14,7 +14,7 @@ args = parser.parse_args()
 os.makedirs('../shadow_model_data', exist_ok=True)
 # df = pd.read_csv('../../../datasets/drive_cleaned.csv')
 # n = 10
-target_feature_idx = -5
+target_feature_idx = -15
 
 # correlations = df.corr()[df.columns[-1]].abs().sort_values(ascending=False)
 # top_n_features = correlations[1:n+1].index.tolist()
