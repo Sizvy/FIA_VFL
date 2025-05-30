@@ -60,7 +60,7 @@ def extract_embeddings_3(model, X_data):
             hybrids.append(hybrid.cpu().numpy())
     return np.concatenate(hybrids, axis=0)
 
-def fit_distribution(embeddings):
+def fit_distribution_1(embeddings):
     if DISTRIBUTION_TYPE == "gaussian":
         mean = np.mean(embeddings, axis=0)
         cov = np.cov(embeddings.T)
@@ -117,16 +117,16 @@ if __name__ == "__main__":
     shadow_minus_F = load_shadow_model(SHADOW_MINUS_F_MODEL, X_minus_F.shape[1])
     
     print("Extracting embeddings for D+F...")
-    E_plus_F = extract_embeddings_3(shadow_plus_F, X_plus_F)
+    E_plus_F = extract_embeddings_2(shadow_plus_F, X_plus_F)
     
     print("Extracting embeddings for D-F...")
-    E_minus_F = extract_embeddings_3(shadow_minus_F, X_minus_F)
+    E_minus_F = extract_embeddings_2(shadow_minus_F, X_minus_F)
     
     print(f"Embedding shapes: With F {E_plus_F.shape}, Without F {E_minus_F.shape}")
     
     print("\nFitting distributions...")
-    P_E_plus_F = fit_distribution_2(E_plus_F)
-    P_E_minus_F = fit_distribution_2(E_minus_F)
+    P_E_plus_F = fit_distribution_1(E_plus_F)
+    P_E_minus_F = fit_distribution_1(E_minus_F)
     
     np.savez("../shadow_model_data/embedding_distributions.npz",
              P_E_plus_F=P_E_plus_F,

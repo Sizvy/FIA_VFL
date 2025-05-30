@@ -61,8 +61,24 @@ def query_target_embeddings_2(model, X_data):
             logit_scaled.append(np.log(confidences / (1 - confidences + 1e-10)))  # Logit scaling
     return np.concatenate(logit_scaled, axis=0)
 
+def query_target_embeddings_3(model, X_data):
+    dataset = TensorDataset(torch.FloatTensor(X_data))
+    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
+
+    hybrids = []
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch[0].to(device)
+            raw = model(batch)
+            conf = torch.sigmoid(raw)
+            logit = torch.log(conf / (1 - conf + 1e-10))
+            # Combine raw and logit features
+            hybrid = torch.cat([raw, logit], dim=1)
+            hybrids.append(hybrid.cpu().numpy())
+    return np.concatenate(hybrids, axis=0)
+
 # ===== MEMBERSHIP INFERENCE =====
-def compute_log_likelihood(emb, distribution):
+def compute_log_likelihood_1(emb, distribution):
     if distribution["type"] == "gaussian":
         return multivariate_normal.logpdf(emb, mean=distribution["mean"], cov=distribution["cov"])
     elif distribution["type"] == "kde":
@@ -71,8 +87,9 @@ def compute_log_likelihood(emb, distribution):
 def run_attack(target_embeddings, P_E_plus_F, P_E_minus_F):
     results = []
     for emb in target_embeddings:
-        score_plus = compute_log_likelihood_2(emb, P_E_plus_F)
-        score_minus = compute_log_likelihood_2(emb, P_E_minus_F)
+        score_plus = compute_log_likelihood_1(emb, P_E_plus_F)
+        score_minus = compute_log_likelihood_1(emb, P_E_minus_F)
+        # print(f"\n{score_plus}-{score_minus}\n")
         results.append(score_plus > score_minus)
     return np.mean(results)
 
@@ -116,7 +133,7 @@ if __name__ == "__main__":
         client2_dim=X_victim.shape[1]
     )
     
-    target_embeddings = query_target_embeddings_1(client2_bottom, X_victim)
+    target_embeddings = query_target_embeddings_2(client2_bottom, X_victim)
     print(f"Extracted {len(target_embeddings)} target embeddings")
 
     P_E_plus_F, P_E_minus_F = load_distributions()
