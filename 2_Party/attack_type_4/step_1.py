@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 DATA_PATH = '../shadow_model_data/shadow_data.npy'  
 OUTPUT_DIR = '../shadow_model_data'        
-TARGET_FEATURE_IDX = -14 
+TARGET_FEATURE_IDX = -9 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def load_and_split_shadow_data():

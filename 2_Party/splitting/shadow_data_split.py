@@ -9,7 +9,7 @@ df = pd.read_csv('../../../datasets/drive_cleaned.csv')
 df.columns = df.columns.astype(str)
 
 shadow_data_sz = 20000
-n = 33
+n = 23
 target_col = df.columns[-1]
 correlations = df.corr()[target_col].abs().sort_values(ascending=False)
 
@@ -33,5 +33,5 @@ np.save('../shadow_model_data/shadow_data.npy', shadow_data)
 np.save('../shadow_model_data/victim_data_initial.npy', victim_data)
 
 print("\nFinal data shapes:")
-print(f"- Shadow data: {shadow_data.shape} (features in reverse correlation order)")
+print(f"- Shadow data: {shadow_data.shape}")
 print(f"- Victim data: {victim_data.shape}")
