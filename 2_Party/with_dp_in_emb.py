@@ -2,28 +2,21 @@ import os
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from opacus import PrivacyEngine
-
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning, module="torch.nn.modules.module")
 from models.complexBottom import BottomModel
 from models.simpleTop import TopModel
-from data.data_loader_dp import load_client_data, create_dataloaders
-from training.train_utils import train_one_epoch
+from data.data_loader import load_client_data, create_dataloaders
+from training.train_utils_dp import train_one_epoch
 from training.validation_utils import validate
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     num_epochs = 50 
-    patience = 5     
+    patience = 5    
     batch_size = 128
     
-    # ===== New DP Parameters =====
-    input_dp_epsilon = 10
-    
-    # Load data with input DP
-    client1_data = load_client_data(1, dp_epsilon=input_dp_epsilon)
-    client2_data = load_client_data(2, dp_epsilon=input_dp_epsilon)
+    # Load and verify data
+    client1_data = load_client_data(1)
+    client2_data = load_client_data(2)
     
     print(f"Client 1 samples: {len(client1_data[0])}")
     print(f"Client 2 samples: {len(client2_data[0])}")
@@ -45,15 +38,14 @@ def main():
     optimizer1 = optim.AdamW(client1_bottom.parameters(), lr=0.001, weight_decay=1e-4)
     optimizer2_bottom = optim.Adam(client2_bottom.parameters(), lr=0.001)
     optimizer_top = optim.Adam(top_model.parameters(), lr=0.001)
-    
 
     # Learning rate scheduler
     scheduler1 = optim.lr_scheduler.CosineAnnealingLR(optimizer1, T_max=num_epochs)
     scheduler2_bottom = optim.lr_scheduler.CosineAnnealingLR(optimizer2_bottom, T_max=num_epochs)
     scheduler_top = optim.lr_scheduler.CosineAnnealingLR(optimizer_top, T_max=num_epochs)
-
-    # Label smoothing for better generalization
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+ 
+    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.BCEWithLogitsLoss()
 
     best_val_acc = 0.0
     counter = 0
@@ -63,7 +55,9 @@ def main():
         train_loss = train_one_epoch(
             train_loader1, train_loader2,
             client1_bottom, client2_bottom, top_model,
-            criterion, optimizer1, optimizer2_bottom, optimizer_top, device
+            criterion, optimizer1, optimizer2_bottom, optimizer_top, device,
+            dp_sigma=1.2,  # Adjust based on privacy requirements
+            dp_max_norm=1.0
         )
         
         val_loss, val_acc, val_f1 = validate(
@@ -110,9 +104,6 @@ def main():
     print("\nFinal Results:")
     print(f"Test Accuracy: {test_acc:.4f}")
     print(f"Test F1: {test_f1:.4f}")
-    
-    print("\nPrivacy Budget:")
-    print(f"- Input DP (ε): {input_dp_epsilon:.2f}")
 
 if __name__ == "__main__":
     main()
