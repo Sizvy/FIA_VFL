@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 os.makedirs('splitted_data', exist_ok=True)
 
 # Load the dataset
-data = pd.read_csv('../../datasets/bank_cleaned.csv', header=None)
+data = pd.read_csv('../../../datasets/drive_cleaned.csv', header=None)
 
 # Shuffle the dataset
 data = data.sample(frac=1, random_state=42).reset_index(drop=True)
