@@ -4,8 +4,8 @@ import shutil
 from pathlib import Path
 
 # Configuration
-total_runs = 50
-with_F_runs = 30
+total_runs = 5
+with_F_runs = 3
 script_dir = Path(__file__).parent  
 
 # Path configurations
@@ -43,12 +43,6 @@ for run_id in range(1, total_runs + 1):
     
     print("Testing Attack ...")
     run_process("python3 step_4.py", cwd=attack_script_path)
-    # Rename model file
-    # src = victim_model_path / "best_vfl_model.pt"
-    # dst = victim_model_path / f"best_vfl_model_{run_id}.pt"
-    # shutil.move(str(src), str(dst))
-    
-    # print(f"Completed run {run_id}. Model saved as {dst}")
 
 print("\nExperiment complete!")
 print(f"- 1-{with_F_runs}: With target feature")

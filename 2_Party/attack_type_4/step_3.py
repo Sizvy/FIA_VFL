@@ -151,12 +151,11 @@ if __name__ == "__main__":
              P_E_plus_F=P_E_plus_F,
              P_E_minus_F=P_E_minus_F)
     
-    plot_embeddings(E_plus_F, E_minus_F)
+    # plot_embeddings(E_plus_F, E_minus_F)
     
     print("""
     Step 3 Complete! Results saved:
     - Embedding distributions: ../shadow_model_data/embedding_distributions.npz
-    - Visualization: ../shadow_model_data/embedding_distributions.png
     """)
 
 
