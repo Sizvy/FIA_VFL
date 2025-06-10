@@ -29,7 +29,7 @@ def main():
     batch_size = 128
     
     # DP parameters
-    dp_sigma = 0.4      
+    dp_sigma = 1.0
     dp_max_norm = 1.0       
     
     # Load and verify data

@@ -42,7 +42,7 @@ def train_and_save_attack_model():
     attacker.train_model(active_embs, passive_embs, epochs=100)
     
     # Create directory if it doesn't exist
-    os.makedirs('Saved_Models/attack_models', exist_ok=True)
+    # os.makedirs('Saved_Models/attack_models', exist_ok=True)
     
     # Save the attack model
     torch.save({

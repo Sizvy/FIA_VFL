@@ -29,14 +29,14 @@ for i in range(num_clients):
     # end_idx = (i + 1) * features_per_client if i != num_clients - 1 else X_train.shape[1]
     end_idx = min((i + 1) * features_per_client, X_train.shape[1])
     # Save the features for each client in .npy format
-    np.save(f'splitted_data/client_{i+1}_train.npy', X_train[:, start_idx:end_idx])
-    np.save(f'splitted_data/client_{i+1}_val.npy', X_val[:, start_idx:end_idx])
-    np.save(f'splitted_data/client_{i+1}_test.npy', X_test[:, start_idx:end_idx])
+    np.save(f'../splitted_data/client_{i+1}_train.npy', X_train[:, start_idx:end_idx])
+    np.save(f'../splitted_data/client_{i+1}_val.npy', X_val[:, start_idx:end_idx])
+    np.save(f'../splitted_data/client_{i+1}_test.npy', X_test[:, start_idx:end_idx])
 
 # Save the labels for the active client (Client 1) in .npy format
-np.save('splitted_data/client_1_train_labels.npy', y_train)
-np.save('splitted_data/client_1_val_labels.npy', y_val)
-np.save('splitted_data/client_1_test_labels.npy', y_test)
+np.save('../splitted_data/client_1_train_labels.npy', y_train)
+np.save('../splitted_data/client_1_val_labels.npy', y_val)
+np.save('../splitted_data/client_1_test_labels.npy', y_test)
 
 print(f"Total features: {X_train.shape[1]}")
 print(f"Features per client: {features_per_client}")
