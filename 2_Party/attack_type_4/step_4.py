@@ -13,7 +13,7 @@ BATCH_SIZE = 128
 DISTRIBUTION_TYPE = "kde"
 
 TARGET_MODEL_PATH = "../Saved_Models/best_vfl_model.pt"
-VICTIM_DATA_PATH = "../splitted_data/client_2_test.npy"  
+VICTIM_DATA_PATH = "../splitted_data/client_2_train.npy"  
 DISTRIBUTIONS_PATH = "../shadow_model_data/embedding_distributions.npz"
 
 # ===== LOAD TARGET MODEL =====
@@ -150,7 +150,7 @@ def run_attack_1(target_embeddings, P_E_plus_F, P_E_minus_F):
         score_plus = compute_log_likelihood_1(emb, P_E_plus_F)
         score_minus = compute_log_likelihood_1(emb, P_E_minus_F)
         # print(f"\n{score_plus}-{score_minus}\n")
-        results.append(abs(score_plus - score_minus)>15.0)
+        results.append(score_plus > score_minus)
     return np.mean(results)
 
 def run_attack_2(target_embeddings, P_E_plus_F, P_E_minus_F):
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     print(f"Victim data shape: {X_victim.shape}")
     
     client2_bottom = load_target_model(
-        client1_dim=np.load("../splitted_data/client_1_test.npy").shape[1],
+        client1_dim=np.load("../splitted_data/client_1_train.npy").shape[1],
         client2_dim=X_victim.shape[1]
     )
     

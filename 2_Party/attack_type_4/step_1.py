@@ -20,10 +20,11 @@ def create_shadow_datasets(X, y, target_feature_idx):
     
     # D-F: Remove target feature F
     X_minus_F = np.delete(X, target_feature_idx, axis=1)
+    # X_minus_F = np.delete(X_minus_F, target_feature_idx, axis=1)
     
     return X_plus_F, X_minus_F, y
 
-def save_client_data(X, y, prefix, split_type='train'):
+def save_client_data_1(X, y, prefix, split_type='train'):
     num_clients = 2
     features_per_client = (X.shape[1] + num_clients - 1) // num_clients
     
@@ -36,6 +37,17 @@ def save_client_data(X, y, prefix, split_type='train'):
     
     np.save(f'{OUTPUT_DIR}/{prefix}_client_1_{split_type}_labels.npy', y)
 
+def save_client_data_2(X, y, prefix, split_type='train'):
+    num_clients = 2
+    client1_features = 10
+    client1_data = X[:, :client1_features]
+    np.save(f'{OUTPUT_DIR}/{prefix}_client_1_{split_type}.npy', client1_data)
+
+    client2_data = X[:, client1_features:]
+    np.save(f'{OUTPUT_DIR}/{prefix}_client_2_{split_type}.npy', client2_data)
+
+    np.save(f'{OUTPUT_DIR}/{prefix}_client_1_{split_type}_labels.npy', y)
+
 if __name__ == "__main__":
     X, y = load_and_split_shadow_data()
     print(f"Original data shape: {X.shape}, Target feature index: {TARGET_FEATURE_IDX}")
@@ -43,8 +55,8 @@ if __name__ == "__main__":
     X_plus_F, X_minus_F, y = create_shadow_datasets(X, y, TARGET_FEATURE_IDX)
     print(f"D+F shape: {X_plus_F.shape}, D-F shape: {X_minus_F.shape}")
     
-    save_client_data(X_plus_F, y, prefix='shadow_plus_F')
-    save_client_data(X_minus_F, y, prefix='shadow_minus_F')
+    save_client_data_2(X_plus_F, y, prefix='shadow_plus_F')
+    save_client_data_2(X_minus_F, y, prefix='shadow_minus_F')
     
     print(f"""
     Shadow datasets prepared:
