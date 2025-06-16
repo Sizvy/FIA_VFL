@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 DATA_PATH = '../shadow_model_data/shadow_data.npy'  
 OUTPUT_DIR = '../shadow_model_data'        
-TARGET_FEATURE_IDX = -9 
+TARGET_FEATURE_IDX = -9
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def load_and_split_shadow_data():
@@ -14,49 +14,28 @@ def load_and_split_shadow_data():
     y = data[:, -1]   
     return X, y
 
-def create_shadow_datasets(X, y, target_feature_idx):
-    # D+F: Keep all features (original data)
-    X_plus_F = X.copy()
-    
-    # D-F: Remove target feature F
-    X_minus_F = np.delete(X, target_feature_idx, axis=1)
-    # X_minus_F = np.delete(X_minus_F, target_feature_idx, axis=1)
-    
-    return X_plus_F, X_minus_F, y
-
-def save_client_data_1(X, y, prefix, split_type='train'):
-    num_clients = 2
-    features_per_client = (X.shape[1] + num_clients - 1) // num_clients
-    
-    for i in range(num_clients):
-        start_idx = i * features_per_client
-        end_idx = min((i + 1) * features_per_client, X.shape[1])
-        client_data = X[:, start_idx:end_idx]
-        
-        np.save(f'{OUTPUT_DIR}/{prefix}_client_{i+1}_{split_type}.npy', client_data)
-    
-    np.save(f'{OUTPUT_DIR}/{prefix}_client_1_{split_type}_labels.npy', y)
-
-def save_client_data_2(X, y, prefix, split_type='train'):
+def save_client_data(X, y, prefix, split_type='train'):
     num_clients = 2
     client1_features = 10
-    client1_data = X[:, :client1_features]
+    client2_data = X[:, :client1_features]
+    if prefix == 'shadow_plus_F':
+        np.save(f'{OUTPUT_DIR}/{prefix}_client_2_{split_type}.npy', client2_data)
+    else:
+        client2_data = np.delete(client2_data, TARGET_FEATURE_IDX, axis=1)
+        client2_data = np.delete(client2_data, TARGET_FEATURE_IDX, axis=1)
+        np.save(f'{OUTPUT_DIR}/{prefix}_client_2_{split_type}.npy', client2_data)
+
+    client1_data = X[:, client1_features:]
     np.save(f'{OUTPUT_DIR}/{prefix}_client_1_{split_type}.npy', client1_data)
-
-    client2_data = X[:, client1_features:]
-    np.save(f'{OUTPUT_DIR}/{prefix}_client_2_{split_type}.npy', client2_data)
-
     np.save(f'{OUTPUT_DIR}/{prefix}_client_1_{split_type}_labels.npy', y)
+    print(f"Client1 Shape: {client1_data.shape}, Client2 Shape: {client2_data.shape}")
 
 if __name__ == "__main__":
     X, y = load_and_split_shadow_data()
     print(f"Original data shape: {X.shape}, Target feature index: {TARGET_FEATURE_IDX}")
     
-    X_plus_F, X_minus_F, y = create_shadow_datasets(X, y, TARGET_FEATURE_IDX)
-    print(f"D+F shape: {X_plus_F.shape}, D-F shape: {X_minus_F.shape}")
-    
-    save_client_data_2(X_plus_F, y, prefix='shadow_plus_F')
-    save_client_data_2(X_minus_F, y, prefix='shadow_minus_F')
+    save_client_data(X, y, prefix='shadow_plus_F')
+    save_client_data(X, y, prefix='shadow_minus_F')
     
     print(f"""
     Shadow datasets prepared:

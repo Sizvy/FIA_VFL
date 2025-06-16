@@ -5,7 +5,7 @@ from pathlib import Path
 
 # Configuration
 total_runs = 5
-with_F_runs = 5
+with_F_runs = 2
 script_dir = Path(__file__).parent  
 
 # Path configurations
@@ -29,14 +29,11 @@ for run_id in range(1, total_runs + 1):
     
     include_F = run_id <= with_F_runs
     
-    print("Running shadow_data_split.py...")
-    if include_F:
-        run_process(f"python3 shadow_data_split_exp.py --keep_target_feature", cwd=scripts_path)
-    else:
-        run_process(f"python3 shadow_data_split_exp.py", cwd=scripts_path)
-    
     print("Running victim_data_split.py...")
-    run_process("python3 victim_data_split.py", cwd=scripts_path)
+    if include_F:
+        run_process(f"python3 victim_data_split.py --keep_target_feature", cwd=scripts_path)
+    else:
+        run_process(f"python3 victim_data_split.py", cwd=scripts_path)
     
     print("Training victim model...")
     run_process("python3 without_dp.py")

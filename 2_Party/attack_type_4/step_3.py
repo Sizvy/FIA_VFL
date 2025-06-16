@@ -3,13 +3,13 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 from scipy.stats import multivariate_normal
 from sklearn.neighbors import KernelDensity
-import matplotlib.pyplot as plt  # For visualization
+import matplotlib.pyplot as plt 
 from averageBottom import BottomModel
 from sklearn.decomposition import PCA
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 128
-DISTRIBUTION_TYPE = "kde"  # "gaussian" or "kde"
+DISTRIBUTION_TYPE = "kde"
 
 SHADOW_PLUS_F_MODEL = "../shadow_model_data/shadow_plus_F_client2_bottom.pt"
 SHADOW_MINUS_F_MODEL = "../shadow_model_data/shadow_minus_F_client2_bottom.pt"
@@ -47,10 +47,6 @@ def extract_embeddings_2(model, X_data):
 
     full_embeddings = np.concatenate(all_embeddings, axis=0)
     return full_embeddings
-    # pca = PCA(n_components=10)
-    # reduced_embeddings = pca.fit_transform(full_embeddings)
-
-    # return reduced_embeddings
 
 def extract_embeddings_3(model, X_data):
     dataset = TensorDataset(torch.FloatTensor(X_data))
@@ -103,20 +99,32 @@ def fit_distribution_2(embeddings):
         }
 
 
-def plot_embeddings(E_plus_F, E_minus_F):
-    from sklearn.decomposition import PCA
+def calculate_distances(E_plus_F, E_minus_F):
+    # Ensure both embeddings have the same shape
+    assert E_plus_F.shape == E_minus_F.shape, "Embeddings must have the same shape!"
     
-    pca = PCA(n_components=2)
-    all_embeddings = np.concatenate([E_plus_F, E_minus_F], axis=0)
-    pca.fit(all_embeddings)
+    # Euclidean Distance (L2)
+    l2_distances = np.sqrt(np.sum((E_plus_F - E_minus_F) ** 2, axis=1))
+    mean_l2 = np.mean(l2_distances)
     
-    plt.figure(figsize=(10, 6))
-    plt.scatter(*pca.transform(E_plus_F).T, label="With F", alpha=0.5)
-    plt.scatter(*pca.transform(E_minus_F).T, label="Without F", alpha=0.5)
-    plt.title("Embedding Distribution (PCA Reduced)")
-    plt.legend()
-    plt.savefig("../shadow_model_data/embedding_distributions.png")
-    plt.close()
+    # Manhattan Distance (L1)
+    l1_distances = np.sum(np.abs(E_plus_F - E_minus_F), axis=1)
+    mean_l1 = np.mean(l1_distances)
+    
+    # Cosine Distance
+    dot_product = np.sum(E_plus_F * E_minus_F, axis=1)
+    norm_plus = np.linalg.norm(E_plus_F, axis=1)
+    norm_minus = np.linalg.norm(E_minus_F, axis=1)
+    cosine_similarity = dot_product / (norm_plus * norm_minus + 1e-10)  # Avoid division by zero
+    cosine_distance = 1 - cosine_similarity
+    mean_cosine = np.mean(cosine_distance)
+    
+    return {
+        "mean_euclidean_distance": mean_l2,
+        "mean_manhattan_distance": mean_l1,
+        "mean_cosine_distance": mean_cosine
+    }
+
 
 if __name__ == "__main__":
     X_plus_F = np.load("../shadow_model_data/shadow_plus_F_client_2_train.npy")
@@ -133,16 +141,13 @@ if __name__ == "__main__":
     
     print(f"Embedding shapes: With F {E_plus_F.shape}, Without F {E_minus_F.shape}")
 
-    # print("With_F mean:", np.mean(E_plus_F, axis=0))
-    # print("Without_F mean:", np.mean(E_minus_F, axis=0))
-    # print("\nWith_F std:", np.std(E_plus_F, axis=0))
-    # print("Without_F std:", np.std(E_minus_F, axis=0))
+    # Calculate distances
+    distances = calculate_distances(E_plus_F, E_minus_F)
+    print("Average Distances Between Embeddings:")
+    print(f"- Euclidean (L2): {distances['mean_euclidean_distance']:.4f}")
+    print(f"- Manhattan (L1): {distances['mean_manhattan_distance']:.4f}")
+    print(f"- Cosine: {distances['mean_cosine_distance']:.4f}")
 
-    # Check for significant differences
-    mean_diff = np.abs(np.mean(E_plus_F - E_minus_F, axis=0))
-    # print("\nMean absolute difference:", mean_diff)
-    print("Max difference:", np.max(mean_diff))
-    
     print("\nFitting distributions...")
     P_E_plus_F = fit_distribution_1(E_plus_F)
     P_E_minus_F = fit_distribution_1(E_minus_F)
