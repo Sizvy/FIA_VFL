@@ -13,7 +13,8 @@ BATCH_SIZE = 128
 DISTRIBUTION_TYPE = "kde"
 
 TARGET_MODEL_PATH = "../Saved_Models/best_vfl_model.pt"
-VICTIM_DATA_PATH = "../splitted_data/client_2_train.npy"  
+VICTIM_DATA_PATH = "../splitted_data/client_2_train.npy"
+VICTIM_DATA_PATH_client1 = "../splitted_data/client_1_train.npy"
 DISTRIBUTIONS_PATH = "../shadow_model_data/embedding_distributions.npz"
 
 # ===== LOAD TARGET MODEL =====
@@ -29,7 +30,8 @@ def load_target_model(client1_dim, client2_dim):
     top_model.load_state_dict(checkpoint['top_model'])
     
     client2_bottom.eval()
-    return client2_bottom
+    client1_bottom.eval()
+    return client2_bottom, client1_bottom
 
 # ===== LOAD DISTRIBUTIONS FROM STEP 3 =====
 def load_distributions():
@@ -162,22 +164,22 @@ def run_attack_2(target_embeddings, P_E_plus_F, P_E_minus_F):
     
     # Convert to probabilities using sigmoid
     prob_F_exists = 1 / (1 + np.exp(-np.array(ratios)))
-    # print(np.mean(prob_F_exists > 0.65))
-    # print(np.mean(prob_F_exists > 0.7))
-    # print(np.mean(prob_F_exists > 0.8))
     return np.mean(prob_F_exists > 0.5)  
 
 # ===== MAIN EXECUTION =====
 if __name__ == "__main__":
     X_victim = np.load(VICTIM_DATA_PATH)
+    X_victim_client1 = np.load(VICTIM_DATA_PATH_client1)
     print(f"Victim data shape: {X_victim.shape}")
     
-    client2_bottom = load_target_model(
+    client2_bottom, client1_bottom  = load_target_model(
         client1_dim=np.load("../splitted_data/client_1_train.npy").shape[1],
         client2_dim=X_victim.shape[1]
     )
     
     target_embeddings = query_target_embeddings_2(client2_bottom, X_victim)
+    helper_embeddings = query_target_embeddings_2(client1_bottom, X_victim_client1)
+    target_embeddings = np.concatenate([target_embeddings, helper_embeddings], axis=1)
     print(f"Extracted {len(target_embeddings)} target embeddings")
 
     P_E_plus_F, P_E_minus_F = load_distributions()

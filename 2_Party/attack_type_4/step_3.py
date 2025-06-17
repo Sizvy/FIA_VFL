@@ -14,6 +14,9 @@ DISTRIBUTION_TYPE = "kde"
 SHADOW_PLUS_F_MODEL = "../shadow_model_data/shadow_plus_F_client2_bottom.pt"
 SHADOW_MINUS_F_MODEL = "../shadow_model_data/shadow_minus_F_client2_bottom.pt"
 
+SHADOW_PLUS_F_MODEL_client1 = "../shadow_model_data/shadow_plus_F_client1_bottom.pt"
+SHADOW_MINUS_F_MODEL_client1 = "../shadow_model_data/shadow_minus_F_client1_bottom.pt"
+
 def load_shadow_model(model_path, input_dim):
     model = BottomModel(input_dim=input_dim, output_dim=64).to(device)
     model.load_state_dict(torch.load(model_path))
@@ -129,15 +132,25 @@ def calculate_distances(E_plus_F, E_minus_F):
 if __name__ == "__main__":
     X_plus_F = np.load("../shadow_model_data/shadow_plus_F_client_2_train.npy")
     X_minus_F = np.load("../shadow_model_data/shadow_minus_F_client_2_train.npy")
+
+    X_plus_F_client1 = np.load("../shadow_model_data/shadow_plus_F_client_1_train.npy")
+    X_minus_F_client1 = np.load("../shadow_model_data/shadow_minus_F_client_1_train.npy")
     
     shadow_plus_F = load_shadow_model(SHADOW_PLUS_F_MODEL, X_plus_F.shape[1])
     shadow_minus_F = load_shadow_model(SHADOW_MINUS_F_MODEL, X_minus_F.shape[1])
+
+    shadow_plus_F_client1 = load_shadow_model(SHADOW_PLUS_F_MODEL_client1, X_plus_F_client1.shape[1])
+    shadow_minus_F_client1 = load_shadow_model(SHADOW_MINUS_F_MODEL_client1, X_minus_F_client1.shape[1])
     
     print("Extracting embeddings for D+F...")
     E_plus_F = extract_embeddings_2(shadow_plus_F, X_plus_F)
+    E_plus_F_client1 = extract_embeddings_2(shadow_plus_F_client1, X_plus_F_client1)
+    E_plus_F = np.concatenate([E_plus_F, E_plus_F_client1], axis=1)
     
     print("Extracting embeddings for D-F...")
     E_minus_F = extract_embeddings_2(shadow_minus_F, X_minus_F)
+    E_minus_F_client1 = extract_embeddings_2(shadow_plus_F_client1, X_plus_F_client1)
+    E_minus_F = np.concatenate([E_minus_F, E_minus_F_client1], axis=1)
     
     print(f"Embedding shapes: With F {E_plus_F.shape}, Without F {E_minus_F.shape}")
 

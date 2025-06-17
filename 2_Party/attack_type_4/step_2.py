@@ -8,7 +8,7 @@ from simpleTop import TopModel
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 128
-EPOCHS = 20
+EPOCHS = 50
 LR = 0.001
 
 SHADOW_PLUS_F_PATH = "../shadow_model_data/shadow_plus_F"
@@ -66,10 +66,10 @@ def train_shadow_model(X1, X2, y, client2_has_F):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        
-        print(f"Epoch {epoch+1}/{EPOCHS} | Loss: {loss.item():.4f}")
+        if epoch % 10 == 0:
+            print(f"Epoch {epoch+1}/{EPOCHS} | Loss: {loss.item():.4f}")
     
-    return client2_bottom
+    return client2_bottom, client1_bottom
 
 # ===== MAIN EXECUTION =====
 if __name__ == "__main__":
@@ -77,11 +77,14 @@ if __name__ == "__main__":
     X1_minus_F, X2_minus_F, y_minus_F = load_shadow_data(SHADOW_MINUS_F_PATH)
     
     print("Training shadow model with F...")
-    shadow_client2_plus_F = train_shadow_model(X1_plus_F, X2_plus_F, y_plus_F, client2_has_F=True)
+    shadow_client2_plus_F, shadow_client1_plus_F = train_shadow_model(X1_plus_F, X2_plus_F, y_plus_F, client2_has_F=True)
     
     print("\nTraining shadow model without F...")
-    shadow_client2_minus_F = train_shadow_model(X1_minus_F, X2_minus_F, y_minus_F, client2_has_F=False)
+    shadow_client2_minus_F, shadow_client1_minus_F = train_shadow_model(X1_minus_F, X2_minus_F, y_minus_F, client2_has_F=False)
     
     torch.save(shadow_client2_plus_F.state_dict(), f"{SHADOW_PLUS_F_PATH}_client2_bottom.pt")
     torch.save(shadow_client2_minus_F.state_dict(), f"{SHADOW_MINUS_F_PATH}_client2_bottom.pt")
+
+    torch.save(shadow_client1_plus_F.state_dict(), f"{SHADOW_PLUS_F_PATH}_client1_bottom.pt")
+    torch.save(shadow_client1_minus_F.state_dict(), f"{SHADOW_MINUS_F_PATH}_client1_bottom.pt")
     print("\nShadow models saved for embedding analysis.")
