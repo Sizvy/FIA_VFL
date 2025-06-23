@@ -130,7 +130,7 @@ def calculate_distances(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter):
 def calculate_distances_for_plotting(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter):
     intra_distances = np.linalg.norm(E_plus_F - E_minus_F, axis=1)
     
-    inter_distances = np.linalg.norm(E_plus_F_inter, E_minus_F_inter, axis=1)
+    inter_distances = np.linalg.norm(E_plus_F_inter - E_minus_F_inter, axis=1)
     
     return intra_distances, inter_distances
 
