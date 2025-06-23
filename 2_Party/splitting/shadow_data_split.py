@@ -8,7 +8,7 @@ df = pd.read_csv('../../../datasets/drive_cleaned.csv')
 
 df.columns = df.columns.astype(str)
 
-shadow_data_sz = 20000
+shadow_data_sz = 40000
 n = 20
 target_col = df.columns[-1]
 correlations = df.corr()[target_col].abs().sort_values(ascending=False)
