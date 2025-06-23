@@ -21,9 +21,9 @@ X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, r
 client1_features = 10
 target_feature_idx = 0
 
-client2_set_train = X_train[:, :client1_features]
-client2_set_val = X_val[:, :client1_features]
-client2_set_test = X_test[:, :client1_features]
+client2_set_train = X_train[:, client1_features:]
+client2_set_val = X_val[:, client1_features:]
+client2_set_test = X_test[:, client1_features:]
 
 if not args.keep_target_feature:
     client2_set_train =  np.delete(client2_set_train, target_feature_idx, axis=1)
@@ -38,9 +38,9 @@ np.save('../splitted_data/client_2_train.npy', client2_set_train)
 np.save('../splitted_data/client_2_val.npy', client2_set_val)
 np.save('../splitted_data/client_2_test.npy', client2_set_test)
 
-np.save('../splitted_data/client_1_train.npy', X_train[:, client1_features:])
-np.save('../splitted_data/client_1_val.npy', X_val[:, client1_features:])
-np.save('../splitted_data/client_1_test.npy', X_test[:, client1_features:])
+np.save('../splitted_data/client_1_train.npy', X_train[:, :client1_features])
+np.save('../splitted_data/client_1_val.npy', X_val[:, :client1_features])
+np.save('../splitted_data/client_1_test.npy', X_test[:, :client1_features])
 
 # Save the labels for the active client (Client 1)
 np.save('../splitted_data/client_1_train_labels.npy', y_train)

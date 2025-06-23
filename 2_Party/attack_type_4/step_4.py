@@ -13,8 +13,8 @@ BATCH_SIZE = 128
 DISTRIBUTION_TYPE = "kde"
 
 TARGET_MODEL_PATH = "../Saved_Models/best_vfl_model.pt"
-VICTIM_DATA_PATH = "../splitted_data/client_2_train.npy"
-VICTIM_DATA_PATH_client1 = "../splitted_data/client_1_train.npy"
+VICTIM_DATA_PATH = "../splitted_data/client_2_test.npy"
+VICTIM_DATA_PATH_client1 = "../splitted_data/client_1_test.npy"
 DISTRIBUTIONS_PATH = "../shadow_model_data/embedding_distributions.npz"
 
 # ===== LOAD TARGET MODEL =====
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     print(f"Victim data shape: {X_victim.shape}")
     
     client2_bottom, client1_bottom  = load_target_model(
-        client1_dim=np.load("../splitted_data/client_1_train.npy").shape[1],
+        client1_dim=X_victim_client1.shape[1],
         client2_dim=X_victim.shape[1]
     )
     

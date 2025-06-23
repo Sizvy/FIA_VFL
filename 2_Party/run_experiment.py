@@ -5,7 +5,7 @@ from pathlib import Path
 
 # Configuration
 total_runs = 2
-with_F_runs = 1
+with_F_runs = 0
 script_dir = Path(__file__).parent  
 
 # Path configurations
