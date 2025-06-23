@@ -11,7 +11,7 @@ record_size = 20000
 
 def load_and_split_shadow_data():
     data = np.load(DATA_PATH)
-    #data = data[:record_size]
+    data = data[:record_size]
     X = data[:, :-1]  
     y = data[:, -1]   
     return X, y
