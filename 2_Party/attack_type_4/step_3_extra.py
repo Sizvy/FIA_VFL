@@ -4,8 +4,10 @@ from torch.utils.data import TensorDataset, DataLoader
 from scipy.stats import multivariate_normal
 from sklearn.neighbors import KernelDensity
 import matplotlib.pyplot as plt 
+import seaborn as sns
 from averageBottom import BottomModel
 from sklearn.decomposition import PCA
+from sklearn.metrics import pairwise_distances
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 128
@@ -112,7 +114,7 @@ def calculate_distances(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter):
     dot_product_inter = np.sum(E_plus_F_inter * E_minus_F_inter, axis=1)
     norm_plus_inter = np.linalg.norm(E_plus_F_inter, axis=1)
     norm_minus_inter = np.linalg.norm(E_minus_F_inter, axis=1)
-    cosine_similarity_inter = dot_product / (norm_plus_inter * norm_minus_inter + 1e-10)  # Avoid division by zero
+    cosine_similarity_inter = dot_product_inter / (norm_plus_inter * norm_minus_inter + 1e-10)  # Avoid division by zero
     cosine_distance_inter = 1 - cosine_similarity_inter
     mean_cosine_inter = np.mean(cosine_distance_inter)
     
@@ -124,6 +126,26 @@ def calculate_distances(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter):
         "mean_manhattan_distance_inter": mean_l1_inter,
         "mean_cosine_distance_inter": mean_cosine_inter
     }
+
+def calculate_distances_for_plotting(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter):
+    intra_distances = np.linalg.norm(E_plus_F - E_minus_F, axis=1)
+    
+    inter_distances = np.linalg.norm(E_plus_F_inter, E_minus_F_inter, axis=1)
+    
+    return intra_distances, inter_distances
+
+
+def plot_distance_distributions(intra_distances, inter_distances):
+    plt.figure(figsize=(10, 6))
+    sns.kdeplot(intra_distances, label='Intra-Sample Distance (same sample, ±F)', fill=True)
+    sns.kdeplot(inter_distances, label='Inter-Sample Distance (different samples)', fill=True)
+
+    plt.title('Distribution of Embedding Distances')
+    plt.xlabel('Euclidean Distance')
+    plt.ylabel('Density')
+    plt.legend()
+    plt.savefig('../shadow_model_data/distance_distributions.png')
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -191,6 +213,9 @@ if __name__ == "__main__":
     print(f"- Manhattan (L1): {distances['mean_manhattan_distance_inter']:.4f}")
     print(f"- Cosine: {distances['mean_cosine_distance_inter']:.4f}")
     
+
+    intra, inter = calculate_distances_for_plotting(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter)
+    plot_distance_distributions(intra,inter)
     print("""
     Step 3 Complete! Results saved:
     - Embedding distributions: ../shadow_model_data/embedding_distributions.npz

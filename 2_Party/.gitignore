@@ -8,4 +8,3 @@ best_discriminator.pt
 training_curve.png
 attack_model_data
 shadow_attack_data
-shadow_model_data
