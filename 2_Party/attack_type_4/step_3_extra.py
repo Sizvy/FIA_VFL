@@ -147,6 +147,25 @@ def plot_distance_distributions(intra_distances, inter_distances):
     plt.savefig('../shadow_model_data/distance_distributions.png')
     plt.show()
 
+def run_classification(intra_distances, inter_distances):
+    """Helper function to run classification analysis"""
+    from classify_distances import train_distance_classifier
+    
+    print("\nTraining classifiers on distance distributions...")
+    
+    # Test different classifiers
+    for model_type in ['logistic', 'svm', 'random_forest']:
+        clf, report, roc_auc = train_distance_classifier(
+            intra_distances, 
+            inter_distances,
+            model_type=model_type
+        )
+        print(f"\n{model_type.upper()} Classifier Results:")
+        print(report)
+        print(f"ROC AUC: {roc_auc:.4f}")
+        
+    return clf
+
 
 if __name__ == "__main__":
     X_plus_F = np.load("../shadow_model_data/shadow_plus_F_client_2_train.npy")
@@ -215,10 +234,14 @@ if __name__ == "__main__":
     
 
     intra, inter = calculate_distances_for_plotting(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter)
-    plot_distance_distributions(intra,inter)
+    plot_distance_distributions(intra, inter)
+    
+    distance_classifier = run_classification(intra, inter)
+    
     print("""
     Step 3 Complete! Results saved:
     - Embedding distributions: ../shadow_model_data/embedding_distributions.npz
+    - Classifier decision boundaries: ../shadow_model_data/*_decision_boundary.png
     """)
 
 
