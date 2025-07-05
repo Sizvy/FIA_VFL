@@ -1,64 +1,64 @@
 features,roc_auc,report,num_features
-['euclidean'],0.7006902397054363,"              precision    recall  f1-score   support
+['euclidean'],0.7295947187853051,"              precision    recall  f1-score   support
 
-       Intra       0.65      0.65      0.65      4014
-       Inter       0.65      0.64      0.64      3986
+       Intra       0.65      0.64      0.64      4014
+       Inter       0.64      0.64      0.64      3986
+
+    accuracy                           0.64      8000
+   macro avg       0.64      0.64      0.64      8000
+weighted avg       0.64      0.64      0.64      8000
+",1
+['manhattan'],0.7420855905484842,"              precision    recall  f1-score   support
+
+       Intra       0.65      0.64      0.65      4014
+       Inter       0.65      0.66      0.65      3986
 
     accuracy                           0.65      8000
    macro avg       0.65      0.65      0.65      8000
 weighted avg       0.65      0.65      0.65      8000
 ",1
-['manhattan'],0.7131169856830747,"              precision    recall  f1-score   support
+['cosine'],0.5690753149226078,"              precision    recall  f1-score   support
 
-       Intra       0.63      0.70      0.67      4014
-       Inter       0.66      0.60      0.63      3986
+       Intra       0.54      0.54      0.54      4014
+       Inter       0.54      0.54      0.54      3986
 
-    accuracy                           0.65      8000
-   macro avg       0.65      0.65      0.65      8000
-weighted avg       0.65      0.65      0.65      8000
+    accuracy                           0.54      8000
+   macro avg       0.54      0.54      0.54      8000
+weighted avg       0.54      0.54      0.54      8000
 ",1
-['cosine'],0.7724600563856907,"              precision    recall  f1-score   support
+"['euclidean', 'manhattan']",0.8934117567940206,"              precision    recall  f1-score   support
 
-       Intra       0.72      0.68      0.69      4014
-       Inter       0.69      0.73      0.71      3986
+       Intra       0.79      0.82      0.80      4014
+       Inter       0.81      0.78      0.80      3986
 
-    accuracy                           0.70      8000
-   macro avg       0.70      0.70      0.70      8000
-weighted avg       0.70      0.70      0.70      8000
-",1
-"['euclidean', 'manhattan']",0.7341035865189349,"              precision    recall  f1-score   support
-
-       Intra       0.64      0.75      0.69      4014
-       Inter       0.70      0.58      0.63      3986
-
-    accuracy                           0.67      8000
-   macro avg       0.67      0.67      0.66      8000
-weighted avg       0.67      0.67      0.66      8000
+    accuracy                           0.80      8000
+   macro avg       0.80      0.80      0.80      8000
+weighted avg       0.80      0.80      0.80      8000
 ",2
-"['euclidean', 'cosine']",0.7548980912516179,"              precision    recall  f1-score   support
+"['euclidean', 'cosine']",0.9078827465636453,"              precision    recall  f1-score   support
 
-       Intra       0.68      0.70      0.69      4014
-       Inter       0.69      0.67      0.68      3986
+       Intra       0.81      0.85      0.83      4014
+       Inter       0.84      0.79      0.82      3986
 
-    accuracy                           0.68      8000
-   macro avg       0.68      0.68      0.68      8000
-weighted avg       0.68      0.68      0.68      8000
+    accuracy                           0.82      8000
+   macro avg       0.82      0.82      0.82      8000
+weighted avg       0.82      0.82      0.82      8000
 ",2
-"['manhattan', 'cosine']",0.7181561724131121,"              precision    recall  f1-score   support
+"['manhattan', 'cosine']",0.9077401510668507,"              precision    recall  f1-score   support
 
-       Intra       0.63      0.74      0.68      4014
-       Inter       0.69      0.56      0.62      3986
+       Intra       0.80      0.85      0.83      4014
+       Inter       0.84      0.79      0.82      3986
 
-    accuracy                           0.65      8000
-   macro avg       0.66      0.65      0.65      8000
-weighted avg       0.66      0.65      0.65      8000
+    accuracy                           0.82      8000
+   macro avg       0.82      0.82      0.82      8000
+weighted avg       0.82      0.82      0.82      8000
 ",2
-"['euclidean', 'manhattan', 'cosine']",0.7370635290282306,"              precision    recall  f1-score   support
+"['euclidean', 'manhattan', 'cosine']",0.9572152883872829,"              precision    recall  f1-score   support
 
-       Intra       0.64      0.75      0.69      4014
-       Inter       0.70      0.58      0.64      3986
+       Intra       0.86      0.93      0.89      4014
+       Inter       0.92      0.85      0.88      3986
 
-    accuracy                           0.67      8000
-   macro avg       0.67      0.67      0.66      8000
-weighted avg       0.67      0.67      0.66      8000
+    accuracy                           0.89      8000
+   macro avg       0.89      0.89      0.89      8000
+weighted avg       0.89      0.89      0.89      8000
 ",3

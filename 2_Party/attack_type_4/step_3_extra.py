@@ -166,7 +166,7 @@ def run_ablation_study(distances_dict):
         ['euclidean', 'manhattan'],
         ['euclidean', 'cosine'],
         ['manhattan', 'cosine'],
-        ['euclidean', 'manhattan', 'cosine']  # All features
+        ['euclidean', 'manhattan', 'cosine']
     ]
     
     results = []
@@ -175,7 +175,7 @@ def run_ablation_study(distances_dict):
         clf, report, roc_auc = train_distance_classifier(
             distances_dict,
             features=features,
-            model_type='svm'  # Use logistic for fair comparison
+            model_type='random_forest'
         )
         
         # Store results
