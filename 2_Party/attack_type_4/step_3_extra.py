@@ -175,7 +175,7 @@ def run_ablation_study(distances_dict):
         clf, report, roc_auc = train_distance_classifier(
             distances_dict,
             features=features,
-            model_type='logistic'  # Use logistic for fair comparison
+            model_type='svm'  # Use logistic for fair comparison
         )
         
         # Store results
