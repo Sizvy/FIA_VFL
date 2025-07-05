@@ -7,11 +7,26 @@ from sklearn.metrics import classification_report, roc_auc_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def train_distance_classifier(intra_distances, inter_distances, test_size=0.2, model_type='logistic'):
-    # Prepare data
-    X = np.concatenate([intra_distances, inter_distances]).reshape(-1, 1)
-    y = np.concatenate([np.zeros(len(intra_distances)),  # 0 for intra
-                       np.ones(len(inter_distances))])   # 1 for inter
+def train_distance_classifier(distances_dict, test_size=0.2, model_type='logistic', features=['euclidean', 'manhattan', 'cosine']):
+    """Train classifier with specified distance features"""
+    # Validate feature selection
+    valid_features = ['euclidean', 'manhattan', 'cosine']
+    if not all(f in valid_features for f in features):
+        raise ValueError(f"Invalid features. Choose from {valid_features}")
+    
+    # Prepare selected features
+    X_parts = []
+    for feat in features:
+        X_parts.append(np.concatenate([
+            distances_dict['intra'][feat], 
+            distances_dict['inter'][feat]
+        ]))
+    
+    X = np.column_stack(X_parts)
+    y = np.concatenate([
+        np.zeros(len(distances_dict['intra']['euclidean'])),
+        np.ones(len(distances_dict['inter']['euclidean']))
+    ])
     
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)

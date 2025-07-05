@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 from scipy.stats import multivariate_normal
@@ -127,44 +128,66 @@ def calculate_distances(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter):
         "mean_cosine_distance_inter": mean_cosine_inter
     }
 
+
 def calculate_distances_for_plotting(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter):
-    intra_distances = np.linalg.norm(E_plus_F - E_minus_F, axis=1)
+    # Intra-sample distances
+    intra_euclidean = np.linalg.norm(E_plus_F - E_minus_F, axis=1)
+    intra_manhattan = np.sum(np.abs(E_plus_F - E_minus_F), axis=1)
+    intra_cosine = 1 - np.sum(E_plus_F * E_minus_F, axis=1) / (np.linalg.norm(E_plus_F, axis=1) * np.linalg.norm(E_minus_F, axis=1))
     
-    inter_distances = np.linalg.norm(E_plus_F_inter - E_minus_F_inter, axis=1)
+    # Inter-sample distances
+    inter_euclidean = np.linalg.norm(E_plus_F_inter - E_minus_F_inter, axis=1)
+    inter_manhattan = np.sum(np.abs(E_plus_F_inter - E_minus_F_inter), axis=1)
+    inter_cosine = 1 - np.sum(E_plus_F_inter * E_minus_F_inter, axis=1) / (np.linalg.norm(E_plus_F_inter, axis=1) * np.linalg.norm(E_minus_F_inter, axis=1))
     
-    return intra_distances, inter_distances
+    return {
+        'intra': {'euclidean': intra_euclidean, 'manhattan': intra_manhattan, 'cosine': intra_cosine},
+        'inter': {'euclidean': inter_euclidean, 'manhattan': inter_manhattan, 'cosine': inter_cosine}
+    }
 
-
-def plot_distance_distributions(intra_distances, inter_distances):
-    plt.figure(figsize=(10, 6))
-    sns.kdeplot(intra_distances, label='Intra-Sample Distance (same sample, ±F)', fill=True)
-    sns.kdeplot(inter_distances, label='Inter-Sample Distance (different samples)', fill=True)
-
-    plt.title('Distribution of Embedding Distances')
-    plt.xlabel('Euclidean Distance')
-    plt.ylabel('Density')
-    plt.legend()
-    plt.savefig('../shadow_model_data/distance_distributions.png')
+def plot_ablation_results(results_df):
+    plt.figure(figsize=(10,6))
+    sns.barplot(x='num_features', y='roc_auc', hue='features', 
+                data=results_df, dodge=False)
+    plt.title("Ablation Study: Feature Combinations vs ROC AUC")
+    plt.xlabel("Number of Features")
+    plt.ylabel("ROC AUC Score")
+    plt.legend(title='Feature Combination')
+    plt.tight_layout()
+    plt.savefig('../shadow_model_data/ablation_studyi.png')
     plt.show()
 
-def run_classification(intra_distances, inter_distances):
-    """Helper function to run classification analysis"""
+def run_ablation_study(distances_dict):
     from classify_distances import train_distance_classifier
+    feature_combinations = [
+        ['euclidean'],
+        ['manhattan'],
+        ['cosine'],
+        ['euclidean', 'manhattan'],
+        ['euclidean', 'cosine'],
+        ['manhattan', 'cosine'],
+        ['euclidean', 'manhattan', 'cosine']  # All features
+    ]
     
-    print("\nTraining classifiers on distance distributions...")
-    
-    # Test different classifiers
-    for model_type in ['logistic', 'svm', 'random_forest']:
+    results = []
+    for features in feature_combinations:
+        print(f"\n=== Testing features: {features} ===")
         clf, report, roc_auc = train_distance_classifier(
-            intra_distances, 
-            inter_distances,
-            model_type=model_type
+            distances_dict,
+            features=features,
+            model_type='logistic'  # Use logistic for fair comparison
         )
-        print(f"\n{model_type.upper()} Classifier Results:")
-        print(report)
-        print(f"ROC AUC: {roc_auc:.4f}")
         
-    return clf
+        # Store results
+        result = {
+            'features': features,
+            'roc_auc': roc_auc,
+            'report': report,
+            'num_features': len(features)
+        }
+        results.append(result)
+    
+    return pd.DataFrame(results)
 
 
 if __name__ == "__main__":
@@ -232,11 +255,14 @@ if __name__ == "__main__":
     print(f"- Manhattan (L1): {distances['mean_manhattan_distance_inter']:.4f}")
     print(f"- Cosine: {distances['mean_cosine_distance_inter']:.4f}")
     
-
-    intra, inter = calculate_distances_for_plotting(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter)
-    plot_distance_distributions(intra, inter)
+    distances_dict = calculate_distances_for_plotting(E_plus_F, E_minus_F, E_plus_F_inter, E_minus_F_inter)
     
-    distance_classifier = run_classification(intra, inter)
+    # Run ablation study
+    ablation_results = run_ablation_study(distances_dict)
+    
+    # Save and display results
+    ablation_results.to_csv('../shadow_model_data/ablation_results.csv', index=False)
+    print(ablation_results[['features', 'roc_auc']])
     
     print("""
     Step 3 Complete! Results saved:

@@ -17,8 +17,8 @@ def load_and_split_shadow_data():
 def save_client_data(X, y, prefix, split_type='train'):
     num_clients = 2
     client1_features = 10
-    client1_data = X[:, :client1_features]
-    client2_data = X[:, client1_features:]
+    client2_data = X[:, :client1_features]
+    client1_data = X[:, client1_features:]
     if prefix == 'shadow_plus_F':
         client2_data, _ = np.split(client2_data, 2)
         client1_data, _ = np.split(client1_data, 2)
