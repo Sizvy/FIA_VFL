@@ -13,8 +13,8 @@ BATCH_SIZE = 128
 DISTRIBUTION_TYPE = "kde"
 
 TARGET_MODEL_PATH = "../Saved_Models/best_vfl_model.pt"
-VICTIM_DATA_PATH = "../splitted_data/client_2_test.npy"
-VICTIM_DATA_PATH_client1 = "../splitted_data/client_1_test.npy"
+VICTIM_DATA_PATH = "../splitted_data/client_2_train.npy"
+VICTIM_DATA_PATH_client1 = "../splitted_data/client_1_train.npy"
 DISTRIBUTIONS_PATH = "../shadow_model_data/embedding_distributions.npz"
 
 # ===== LOAD TARGET MODEL =====

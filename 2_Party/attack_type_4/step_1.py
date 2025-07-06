@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 DATA_PATH = '../shadow_model_data/shadow_data.npy'  
 OUTPUT_DIR = '../shadow_model_data'        
-TARGET_FEATURE_IDX = 0
+TARGET_FEATURE_IDX = 3
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 record_size = 20000
 
