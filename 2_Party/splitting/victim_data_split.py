@@ -10,7 +10,7 @@ parser.add_argument('--keep_target_feature', action='store_true',
 args = parser.parse_args()
 
 os.makedirs('../splitted_data', exist_ok=True)
-victim_data = np.load('../shadow_model_data/shadow_data.npy')
+victim_data = np.load('../shadow_model_data/victim_data_initial.npy')
 X = victim_data[:, :-1]
 y = victim_data[:, -1]
 

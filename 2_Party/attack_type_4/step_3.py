@@ -51,22 +51,6 @@ def extract_embeddings_2(model, X_data):
     full_embeddings = np.concatenate(all_embeddings, axis=0)
     return full_embeddings
 
-def extract_embeddings_3(model, X_data):
-    dataset = TensorDataset(torch.FloatTensor(X_data))
-    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
-
-    hybrids = []
-    with torch.no_grad():
-        for batch in loader:
-            batch = batch[0].to(device)
-            raw = model(batch)
-            conf = torch.sigmoid(raw)
-            logit = torch.log(conf / (1 - conf + 1e-10))
-            # Combine raw and logit features
-            hybrid = torch.cat([raw, logit], dim=1)
-            hybrids.append(hybrid.cpu().numpy())
-    return np.concatenate(hybrids, axis=0)
-
 def fit_distribution_1(embeddings):
     if DISTRIBUTION_TYPE == "gaussian":
         mean = np.mean(embeddings, axis=0)
@@ -76,30 +60,6 @@ def fit_distribution_1(embeddings):
         kde = KernelDensity(kernel='gaussian', bandwidth=0.7).fit(embeddings)
         # print(kde)
         return {"type": "kde", "kde": kde}
-
-def fit_distribution_2(embeddings):
-    n_features = embeddings.shape[1]
-    raw_features = embeddings[:, :n_features//2]
-    logit_features = embeddings[:, n_features//2:]
-
-    if DISTRIBUTION_TYPE == "gaussian":
-        return {
-            "type": "gaussian_hybrid",
-            "raw_mean": np.mean(raw_features, axis=0),
-            "raw_cov": np.cov(raw_features.T),
-            "logit_mean": np.mean(logit_features, axis=0),
-            "logit_cov": np.cov(logit_features.T)
-        }
-    elif DISTRIBUTION_TYPE == "kde":
-        kde_raw = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(raw_features)
-        kde_logit = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(logit_features)
-
-        return {
-            "type": "kde_hybrid",
-            "kde_raw": kde_raw,
-            "kde_logit": kde_logit,
-            "feature_split": n_features//2
-        }
 
 
 def calculate_distances(E_plus_F, E_minus_F):

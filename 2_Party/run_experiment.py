@@ -4,8 +4,8 @@ import shutil
 from pathlib import Path
 
 # Configuration
-total_runs = 5
-with_F_runs = 2
+total_runs = 7
+with_F_runs = 4
 script_dir = Path(__file__).parent  
 
 # Path configurations

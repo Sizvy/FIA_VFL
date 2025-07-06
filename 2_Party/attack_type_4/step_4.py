@@ -67,82 +67,13 @@ def query_target_embeddings_2(model, X_data):
     
     # Step 2: Concatenate and apply PCA
     full_embeddings = np.concatenate(all_embeddings, axis=0)
-    # pca = PCA(n_components=10)
-    # reduced_embeddings = pca.fit_transform(full_embeddings)
     
     return full_embeddings
-
-def query_target_embeddings_3(model, X_data):
-    dataset = TensorDataset(torch.FloatTensor(X_data))
-    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
-
-    hybrids = []
-    with torch.no_grad():
-        for batch in loader:
-            batch = batch[0].to(device)
-            raw = model(batch)
-            conf = torch.sigmoid(raw)
-            logit = torch.log(conf / (1 - conf + 1e-10))
-            # Combine raw and logit features
-            hybrid = torch.cat([raw, logit], dim=1)
-            hybrids.append(hybrid.cpu().numpy())
-    return np.concatenate(hybrids, axis=0)
 
 # ===== MEMBERSHIP INFERENCE =====
 def compute_log_likelihood_1(emb, distribution):
     if distribution["type"] == "gaussian":
         return multivariate_normal.logpdf(emb, mean=distribution["mean"], cov=distribution["cov"])
-    elif distribution["type"] == "kde":
-        return distribution["kde"].score_samples(emb.reshape(1, -1))[0]
-
-def compute_log_likelihood_2(emb, distribution):
-    if "hybrid" in distribution["type"]:
-        # Split the input embedding
-        split_point = distribution.get("feature_split", emb.shape[0]//2)
-        raw = emb[:split_point]
-        logit = emb[split_point:]
-
-        if "gaussian" in distribution["type"]:
-            logp_raw = multivariate_normal.logpdf(
-                raw,
-                mean=distribution["raw_mean"],
-                cov=distribution["raw_cov"]
-            )
-            logp_logit = multivariate_normal.logpdf(
-                logit,
-                mean=distribution["logit_mean"],
-                cov=distribution["logit_cov"]
-            )
-        else:  # KDE
-            logp_raw = distribution["kde_raw"].score_samples(raw.reshape(1, -1))[0]
-            logp_logit = distribution["kde_logit"].score_samples(logit.reshape(1, -1))[0]
-
-        return logp_raw + logp_logit  # Combined log-likelihood
-
-    # Original non-hybrid case
-    elif distribution["type"] == "gaussian":
-        return multivariate_normal.logpdf(emb, mean=distribution["mean"], cov=distribution["cov"])
-    elif distribution["type"] == "kde":
-        return distribution["kde"].score_samples(emb.reshape(1, -1))[0]
-
-def compute_log_likelihood_3(emb, distribution):
-    if distribution["type"] == "gaussian":
-        cov = distribution["cov"]
-        
-        # Fix 1: Ensure symmetry
-        cov = (cov + cov.T) / 2  
-        
-        # Fix 2: Add small diagonal noise if needed
-        min_eig = np.min(np.real(np.linalg.eigvals(cov)))
-        if min_eig < 1e-8:
-            cov += np.eye(cov.shape[0]) * 1e-6
-            
-        return multivariate_normal.logpdf(
-            emb, 
-            mean=distribution["mean"], 
-            cov=cov,
-            allow_singular=True  # Critical addition
-        )
     elif distribution["type"] == "kde":
         return distribution["kde"].score_samples(emb.reshape(1, -1))[0]
 
@@ -154,17 +85,6 @@ def run_attack_1(target_embeddings, P_E_plus_F, P_E_minus_F):
         # print(f"\n{score_plus}-{score_minus}\n")
         results.append(score_plus > score_minus)
     return np.mean(results)
-
-def run_attack_2(target_embeddings, P_E_plus_F, P_E_minus_F):
-    ratios = []
-    for emb in target_embeddings:
-        log_p_plus = compute_log_likelihood_1(emb, P_E_plus_F)
-        log_p_minus = compute_log_likelihood_1(emb, P_E_minus_F)
-        ratios.append(log_p_plus - log_p_minus)
-    
-    # Convert to probabilities using sigmoid
-    prob_F_exists = 1 / (1 + np.exp(-np.array(ratios)))
-    return np.mean(prob_F_exists > 0.5)  
 
 # ===== MAIN EXECUTION =====
 if __name__ == "__main__":
